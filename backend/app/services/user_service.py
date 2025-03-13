@@ -1,9 +1,11 @@
-from sqlalchemy.orm import Session
 from typing import List, Optional
+from sqlalchemy.orm import Session
+from passlib.context import CryptContext
+from datetime import datetime
 
-from app.db.models import User
+from app.db import User
 from app.schemas import UserCreate, UserUpdate
-from app.core import get_password_hash
+from app.core.security import get_password_hash, verify_password
 
 
 class UserService:
@@ -11,34 +13,55 @@ class UserService:
         self.db = db
 
     def get_user_by_id(self, user_id: int) -> Optional[User]:
+        """Get user by ID."""
         return self.db.query(User).filter(User.id == user_id).first()
 
     def get_user_by_email(self, email: str) -> Optional[User]:
+        """Get user by email."""
         return self.db.query(User).filter(User.email == email).first()
 
     def get_users(self, skip: int = 0, limit: int = 100) -> List[User]:
+        """Get multiple users with pagination."""
         return self.db.query(User).offset(skip).limit(limit).all()
 
     def create_user(self, user_in: UserCreate) -> User:
-        # Check if user already exists
-        db_user = self.get_user_by_email(self.db, user_in.email)
-        if db_user:
+        """Create a new user."""
+        # Check for existing user with same email
+        if self.get_user_by_email(user_in.email):
             raise ValueError("Email already registered")
 
-        # Create new user
+        # Create user with hashed password
         db_user = User(
-            username=user_in.username,
             email=user_in.email,
+            phone=user_in.phone,
             full_name=user_in.full_name,
-            bio=user_in.bio,
-            location=user_in.location,
-            latitude=user_in.latitude,
-            longitude=user_in.longitude,
-            phone_number=user_in.phone_number,
             password_hash=get_password_hash(user_in.password),
+            role="volunteer",  # Default role
         )
 
         self.db.add(db_user)
         self.db.commit()
         self.db.refresh(db_user)
         return db_user
+
+    def update_user(self, user_id: int, user_in: UserUpdate) -> Optional[User]:
+        """Update user information."""
+        db_user = self.get_user_by_id(user_id)
+        if not db_user:
+            return None
+
+        # Update user attributes that are provided
+        update_data = user_in.dict(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(db_user, field, value)
+
+        self.db.commit()
+        self.db.refresh(db_user)
+        return db_user
+
+    def record_login(self, user_id: int) -> None:
+        """Record user login time."""
+        db_user = self.get_user_by_id(user_id)
+        if db_user:
+            db_user.last_login = datetime.utcnow()
+            self.db.commit()

@@ -16,6 +16,11 @@ from .models import (
     ResourceRequest,
     Skill,
     Base,
+    TimeStampMixin,
+    ResourceType,
+    EventType,
+    UserRole,
+    ParticipationStatus,
 )
 
 
@@ -38,4 +43,9 @@ __all__ = [
     "ResourceRequest",
     "Skill",
     "Base",
+    "TimeStampMixin",
+    "ResourceType",
+    "EventType",
+    "UserRole",
+    "ParticipationStatus",
 ]

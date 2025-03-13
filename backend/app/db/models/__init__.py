@@ -1,5 +1,12 @@
 from .user import User
-from .base import Base
+from .base import (
+    Base,
+    TimeStampMixin,
+    ResourceType,
+    EventType,
+    UserRole,
+    ParticipationStatus,
+)
 from .volunteer import Volunteer, VolunteerSkill
 from .organizer import Organization, OrganizationMember, Organizer
 from .beneficiary import Beneficiary, AssistanceRecord
@@ -26,4 +33,9 @@ __all__ = [
     "ResourceRequest",
     "Skill",
     "Base",
+    "TimeStampMixin",
+    "ResourceType",
+    "EventType",
+    "UserRole",
+    "ParticipationStatus",
 ]

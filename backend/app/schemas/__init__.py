@@ -1,5 +1,5 @@
 from .user import User, UserCreate, UserUpdate, UserResponse
-from .volunteer import VolunteerResponse
+from .volunteer import VolunteerSkillBase, VolunteerResponse
 from .resource import (
     ResourceContribution,
     ResourceRequestCreate,
