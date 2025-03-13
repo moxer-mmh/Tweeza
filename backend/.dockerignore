@@ -1,0 +1,34 @@
+#fortuna/backend/.dockerignore
+# Ignore Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore virtual environments
+venv/
+.env
+.venv/
+
+# Ignore logs and database files
+*.log
+*.sqlite3
+
+# Ignore environment & configuration files
+.env*
+*.pem
+*.crt
+*.key
+
+# Ignore IDE & editor files
+.vscode/
+.idea/
+*.iml
+
+# Ignore Git files
+.git/
+.gitignore
+
+# Ignore Docker-related files
+Dockerfile
+docker-compose.yml

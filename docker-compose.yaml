@@ -1,0 +1,18 @@
+services:
+  backend:
+    build: ./backend
+    container_name: backend_c
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    environment:
+      - APP_ENV=production
+      - DATABASE_URL=
+      - PROJECT_NAME=Fortuna
+      - API_STR=/api
+      - SECRET_KEY=your_secret_key_here
+      - ALGORITHM=HS256
+      - ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
