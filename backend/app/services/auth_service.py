@@ -66,17 +66,27 @@ def can_manage_user(admin_user: User, target_user_id: int, db: Session) -> bool:
     if is_super_admin(admin_user):
         return True
 
+    # If it's the user's own profile, they can manage it
+    if admin_user.id == target_user_id:
+        return True
+
+    # Check if user has admin role
+    if not admin_user.has_role(UserRoleEnum.ADMIN.value):
+        return False
+
     # Get all organizations where the admin is an admin
     admin_orgs = organization_service.get_user_organizations(db, admin_user.id)
-    admin_org_ids = [
-        org.id
-        for org in admin_orgs
-        if any(
-            m.role == UserRoleEnum.ADMIN.value
-            for m in org.members
-            if m.user_id == admin_user.id
-        )
-    ]
+
+    # Get organization IDs where current user is an admin
+    admin_org_ids = []
+    for org in admin_orgs:
+        for member in org.members:
+            if (
+                member.user_id == admin_user.id
+                and member.role == UserRoleEnum.ADMIN.value
+            ):
+                admin_org_ids.append(org.id)
+                break
 
     # Check if target user is in any of the admin's organizations
     for org_id in admin_org_ids:

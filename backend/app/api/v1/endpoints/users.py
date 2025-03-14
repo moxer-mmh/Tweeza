@@ -29,12 +29,8 @@ def update_user(
     """
     Update a user by ID.
     """
-    # Check if user is super admin or organization admin with rights to manage this user
-    if not (
-        auth_service.is_super_admin(current_user)
-        or auth_service.can_manage_user(current_user, user_id, db)
-        or current_user.id == user_id
-    ):
+    # Check if user can manage this user (includes self-management)
+    if not auth_service.can_manage_user(current_user, user_id, db):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions to update this user",

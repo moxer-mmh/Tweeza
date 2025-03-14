@@ -103,6 +103,12 @@ def delete_organization(db: Session, org_id: int) -> bool:
     if not db_org:
         return False
 
+    # First, delete all members of the organization
+    db.query(OrganizationMember).filter(
+        OrganizationMember.organization_id == org_id
+    ).delete()
+
+    # Now delete the organization itself
     db.delete(db_org)
     db.commit()
     return True
