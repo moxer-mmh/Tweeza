@@ -4,6 +4,7 @@ import { useState } from "react";
 import EmergencyCard from "@/components/EmergencyCard";
 import AssistanceCard from "@/components/AssistanceCard";
 import EventCard from "@/components/EventCard";
+import Map from "@/components/Map";
 
 const Page = () => {
   const [activeTab, setActiveTab] = useState("Emergency");
@@ -90,7 +91,7 @@ const Page = () => {
   const activeData = mockData[activeTab] || [];
 
   return (
-    <div className="container mx-auto  pb-8">
+    <div className="container mx-auto pb-8">
       <div className="relative">
         <div className="absolute left-1/2 -translate-x-1/2 top-4 z-10 flex items-center gap-2 w-3/4 md:w-1/4 max-w-4xl ">
           <div className="relative flex-1">
@@ -99,21 +100,11 @@ const Page = () => {
               placeholder="Search locations..."
               className="w-full pl-10 pr-4 py-1 text-black rounded-lg focus:outline-none focus:border-red-700 bg-white "
             />
-            <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <circle cx="11" cy="11" r="8" />
-              <path d="m21 21-4.3-4.3" />
-            </svg>
           </div>
         </div>
+        <Map data={activeData} type={activeTab} />
+      </div>
+      <div className="mt-[420px]">
         <div className="absolute right-4 top-2 z-10">
           <button className="p-2 h-10 w-10 bg-white border-2 shadow-md border-[#E8E8E8] rounded-full hover:shadow-lg transition-shadow">
             <svg
@@ -130,11 +121,6 @@ const Page = () => {
               <circle cx="12" cy="7" r="4" />
             </svg>
           </button>
-        </div>
-        <div className="bg-gray-100 rounded-lg p-4  h-[400px] relative">
-          <div className="absolute inset-0 flex items-center justify-center">
-            <p className="text-gray-500"></p>
-          </div>
         </div>
       </div>
 
