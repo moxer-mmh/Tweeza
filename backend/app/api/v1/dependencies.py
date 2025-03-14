@@ -7,7 +7,7 @@ from app.db import get_db, User
 from app.core.security import decode_token
 from app.services import user_service
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
 
 def get_current_user(

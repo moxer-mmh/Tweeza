@@ -7,7 +7,7 @@ from app.schemas import (
     EventCollaboratorCreate,
     EventBeneficiaryCreate,
 )
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 def get_event(db: Session, event_id: int) -> Optional[Event]:
@@ -27,7 +27,7 @@ def get_events_by_organization(db: Session, organization_id: int) -> List[Event]
 
 def get_upcoming_events(db: Session, skip: int = 0, limit: int = 100) -> List[Event]:
     """Get upcoming events."""
-    now = datetime.now(datetime.timezone.utc)
+    now = datetime.now(timezone.utc)
     return (
         db.query(Event)
         .filter(Event.start_time > now)
@@ -200,7 +200,7 @@ def add_beneficiary_to_event(
     beneficiary = EventBeneficiary(
         event_id=event_id,
         user_id=beneficiary_data.user_id,
-        benefit_time=datetime.now(datetime.timezone.utc),
+        benefit_time=datetime.now(timezone.utc),
     )
 
     db.add(beneficiary)
