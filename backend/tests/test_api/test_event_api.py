@@ -207,3 +207,72 @@ def test_list_event_beneficiaries(
     data = response.json()
     assert isinstance(data, list)
     assert any(b["id"] == test_user.id for b in data)
+
+
+def test_get_nearby_events(client, admin_token_headers, test_organization):
+    """Test getting events near a location."""
+    from app.schemas import EventTypeEnum
+    from datetime import datetime, timedelta
+
+    # Create test events with coordinates
+    event_data1 = {
+        "title": "Event Near",
+        "event_type": EventTypeEnum.IFTAR.value,
+        "start_time": (datetime.now() + timedelta(days=1)).isoformat(),
+        "end_time": (datetime.now() + timedelta(days=1, hours=2)).isoformat(),
+        "organization_id": test_organization.id,
+        "latitude": 36.7528,
+        "longitude": 3.0429,
+        "address": "Algiers Center",
+    }
+
+    # Create the event
+    create_response = client.post(
+        "/api/v1/events/", json=event_data1, headers=admin_token_headers
+    )
+    assert create_response.status_code == 200
+
+    # Test nearby search endpoint with properly formatted parameters
+    response = client.get(
+        "/api/v1/events/nearby",
+        params={
+            "latitude": 36.75,  # Send as number instead of string
+            "longitude": 3.04,
+            "radius": 10.0,
+        },
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) >= 1
+    assert any(event["title"] == "Event Near" for event in data)
+
+
+def test_search_events_by_address(client, admin_token_headers, test_organization):
+    """Test searching events by address."""
+    from app.schemas import EventTypeEnum
+    from datetime import datetime, timedelta
+
+    # Create test events with addresses
+    event_data = {
+        "title": "Ramadan Iftar",
+        "event_type": EventTypeEnum.IFTAR.value,
+        "start_time": (datetime.now() + timedelta(days=1)).isoformat(),
+        "end_time": (datetime.now() + timedelta(days=1, hours=2)).isoformat(),
+        "organization_id": test_organization.id,
+        "address": "Algiers Downtown, Algeria",
+    }
+
+    # Create the event
+    create_response = client.post(
+        "/api/v1/events/", json=event_data, headers=admin_token_headers
+    )
+    assert create_response.status_code == 200
+
+    # Test search endpoint with properly formatted parameters
+    response = client.get("/api/v1/events/search", params={"address": "Algiers"})
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) >= 1
+    assert any(e["title"] == "Ramadan Iftar" for e in data)

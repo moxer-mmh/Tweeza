@@ -8,6 +8,8 @@ from app.schemas import (
     EventBeneficiaryCreate,
 )
 from datetime import datetime, timezone
+import math
+from sqlalchemy import func
 
 
 def get_event(db: Session, event_id: int) -> Optional[Event]:
@@ -56,6 +58,10 @@ def create_event(db: Session, event_data: EventCreate) -> Event:
         start_time=event_data.start_time,
         end_time=event_data.end_time,
         organization_id=event_data.organization_id,
+        # Add geolocation data
+        latitude=event_data.latitude,
+        longitude=event_data.longitude,
+        address=event_data.address,
     )
 
     db.add(db_event)
@@ -217,3 +223,107 @@ def get_event_beneficiaries(db: Session, event_id: int) -> List[User]:
 
     user_ids = [b.user_id for b in beneficiaries]
     return db.query(User).filter(User.id.in_(user_ids)).all()
+
+
+def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """
+    Calculate the great circle distance between two points
+    on the earth using the Haversine formula.
+    Returns distance in kilometers.
+    """
+    # Convert decimal degrees to radians
+    lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
+
+    # Haversine formula
+    dlon = lon2 - lon1
+    dlat = lat2 - lat1
+    a = (
+        math.sin(dlat / 2) ** 2
+        + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
+    )
+    c = 2 * math.asin(math.sqrt(a))
+    r = 6371  # Radius of earth in kilometers
+    return c * r
+
+
+def get_nearby_events(
+    db: Session,
+    latitude: float,
+    longitude: float,
+    radius: float = 5.0,  # Default 5km radius
+    event_type: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 100,
+) -> List[Event]:
+    """
+    Find events within a certain radius (in kilometers) from a given location.
+    Optionally filter by event type.
+    """
+    # Approximate conversion from distance in kilometers to degrees
+    # 1 degree of latitude is approximately 111 kilometers
+    degree_radius = radius / 111.0
+
+    # Base query for events
+    query = db.query(Event)
+
+    # Filter by coordinates - this is a simple approximation using a square boundary
+    query = query.filter(
+        Event.latitude.between(latitude - degree_radius, latitude + degree_radius),
+        Event.longitude.between(longitude - degree_radius, longitude + degree_radius),
+    )
+
+    # Filter by event type if provided
+    if event_type:
+        query = query.filter(Event.event_type == event_type)
+
+    # Get candidate events that are roughly within the square boundary
+    candidates = query.all()
+
+    # Further filter using actual haversine distance calculation
+    nearby_events = []
+    for event in candidates:
+        # Skip events without coordinates
+        if event.latitude is None or event.longitude is None:
+            continue
+
+        # Calculate distance using Haversine formula
+        distance = calculate_distance(
+            latitude, longitude, event.latitude, event.longitude
+        )
+
+        # Include event if within the specified radius
+        if distance <= radius:
+            # Add distance as attribute to event
+            event.distance = distance
+            nearby_events.append(event)
+
+    # Sort by distance
+    nearby_events.sort(key=lambda x: x.distance)
+
+    # Apply skip and limit
+    return nearby_events[skip : skip + limit]
+
+
+def search_events_by_address(
+    db: Session,
+    address_query: str,
+    event_type: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 100,
+) -> List[Event]:
+    """
+    Search for events by address text.
+    Optionally filter by event type.
+    """
+    # Base query
+    query = db.query(Event)
+
+    # Search in address field using LIKE
+    query = query.filter(Event.address.ilike(f"%{address_query}%"))
+
+    # Filter by event type if provided
+    if event_type:
+        query = query.filter(Event.event_type == event_type)
+
+    # Apply ordering, skip and limit
+    return query.order_by(Event.start_time).offset(skip).limit(limit).all()

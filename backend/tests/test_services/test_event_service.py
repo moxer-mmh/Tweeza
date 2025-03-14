@@ -206,3 +206,84 @@ def test_remove_collaborator_from_event(db_session, test_event):
     # Verify collaborator is removed
     collaborators = event_service.get_event_collaborators(db_session, test_event.id)
     assert not any(c.id == collab_org.id for c in collaborators)
+
+
+def test_get_nearby_events(db_session, test_organization):
+    """Test finding events near a location."""
+    # Create test events with coordinates
+    from app.schemas import EventCreate
+    from app.services import event_service
+
+    event_data1 = {
+        "title": "Event Near",
+        "event_type": "IFTAR",
+        "start_time": datetime.now() + timedelta(days=1),
+        "end_time": datetime.now() + timedelta(days=1, hours=2),
+        "organization_id": test_organization.id,  # Use test_organization instead of hardcoded ID
+        "latitude": 36.7528,
+        "longitude": 3.0429,  # Algiers coordinates
+        "address": "Algiers Center",
+    }
+
+    event_data2 = {
+        "title": "Event Far",
+        "event_type": "IFTAR",
+        "start_time": datetime.now() + timedelta(days=1),
+        "end_time": datetime.now() + timedelta(days=1, hours=2),
+        "organization_id": test_organization.id,  # Use test_organization instead of hardcoded ID
+        "latitude": 35.2,
+        "longitude": 0.6377,  # Far from Algiers
+        "address": "Distant Location",
+    }
+
+    event1 = event_service.create_event(db_session, EventCreate(**event_data1))
+    event2 = event_service.create_event(db_session, EventCreate(**event_data2))
+
+    # Test nearby search (near Algiers)
+    nearby_events = event_service.get_nearby_events(
+        db_session, latitude=36.75, longitude=3.04, radius=10  # 10km radius
+    )
+
+    assert len(nearby_events) == 1
+    assert nearby_events[0].id == event1.id
+    assert hasattr(nearby_events[0], "distance")
+    assert nearby_events[0].distance < 10  # Should be less than 10km
+
+
+def test_search_events_by_address(db_session, test_organization):
+    """Test searching events by address."""
+    from app.schemas import EventCreate
+    from app.services import event_service
+
+    # Create test events with addresses
+    event_data1 = {
+        "title": "Event Algiers",
+        "event_type": "IFTAR",
+        "start_time": datetime.now() + timedelta(days=1),
+        "end_time": datetime.now() + timedelta(days=1, hours=2),
+        "organization_id": test_organization.id,
+        "address": "Algiers Center, Algeria",
+    }
+
+    event_data2 = {
+        "title": "Event Oran",
+        "event_type": "IFTAR",
+        "start_time": datetime.now() + timedelta(days=1),
+        "end_time": datetime.now() + timedelta(days=1, hours=2),
+        "organization_id": test_organization.id,
+        "address": "Oran City, Algeria",
+    }
+
+    event1 = event_service.create_event(db_session, EventCreate(**event_data1))
+    event2 = event_service.create_event(db_session, EventCreate(**event_data2))
+
+    # Test address search
+    algiers_events = event_service.search_events_by_address(db_session, "Algiers")
+    assert len(algiers_events) == 1
+    assert algiers_events[0].id == event1.id
+
+    # Test address search with event type filter
+    all_events = event_service.search_events_by_address(
+        db_session, "Algeria", event_type="IFTAR"
+    )
+    assert len(all_events) == 2

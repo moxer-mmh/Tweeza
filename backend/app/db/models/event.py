@@ -1,5 +1,5 @@
 # backend/app/db/models/event.py
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Float
 from sqlalchemy.orm import relationship
 from ..base import Base
 
@@ -13,6 +13,11 @@ class Event(Base):
     start_time = Column(DateTime)
     end_time = Column(DateTime)
     organization_id = Column(Integer, ForeignKey("organizations.id"))
+    
+    # Add geolocation fields
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
+    address = Column(String(255), nullable=True)
 
     organization = relationship("Organization", back_populates="events")
     collaborators = relationship("EventCollaborator", back_populates="event")

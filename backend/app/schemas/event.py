@@ -1,37 +1,43 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, Field, validator, ConfigDict
 from typing import Optional, List
 from datetime import datetime
 from enum import Enum
 
 
 class EventTypeEnum(str, Enum):
-    IFTAR = "iftar"
-    CLEANUP = "cleanup"
-    EMERGENCY = "emergency"
-    WORKSHOP = "workshop"
+    IFTAR = "IFTAR"
+    DONATION = "DONATION"
+    VOLUNTEER = "VOLUNTEER"
+    OTHER = "OTHER"
 
 
 class EventBase(BaseModel):
     title: str
-    event_type: EventTypeEnum
-    start_time: datetime
-    end_time: datetime
-    organization_id: int
+    event_type: str
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    address: Optional[str] = None
 
 
 class EventCreate(EventBase):
-    pass
+    organization_id: int
 
 
 class EventUpdate(BaseModel):
     title: Optional[str] = None
-    event_type: Optional[EventTypeEnum] = None
+    event_type: Optional[str] = None
     start_time: Optional[datetime] = None
     end_time: Optional[datetime] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    address: Optional[str] = None
 
 
 class EventResponse(EventBase):
     id: int
+    organization_id: int
 
     model_config = ConfigDict(from_attributes=True, use_enum_values=True)
 

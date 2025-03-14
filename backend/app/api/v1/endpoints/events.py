@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 
 from app.api.v1.dependencies import get_current_user
 from app.db import get_db, User
@@ -23,7 +23,7 @@ def create_event(
     *,
     event_data: EventCreate,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Create a new event.
@@ -71,6 +71,60 @@ def upcoming_events(skip: int = 0, limit: int = 100, db: Session = Depends(get_d
     return event_service.get_upcoming_events(db, skip=skip, limit=limit)
 
 
+@router.get("/nearby", response_model=List[EventResponse])
+def nearby_events(
+    latitude: float,
+    longitude: float,
+    radius: Optional[float] = 5.0,
+    event_type: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+):
+    """
+    Get events near a specific location within a certain radius (in kilometers).
+    Optionally filter by event type.
+    """
+    try:
+        return event_service.get_nearby_events(
+            db,
+            latitude=float(latitude),
+            longitude=float(longitude),
+            radius=float(radius) if radius else 5.0,
+            event_type=event_type,
+            skip=skip,
+            limit=limit,
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid parameters: {str(e)}",
+        )
+
+
+@router.get("/search", response_model=List[EventResponse])
+def search_events(
+    address: str,
+    event_type: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+):
+    """
+    Search for events by address text.
+    Optionally filter by event type.
+    """
+    if not address or len(address.strip()) < 2:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Address search term must be at least 2 characters",
+        )
+
+    return event_service.search_events_by_address(
+        db, address_query=address, event_type=event_type, skip=skip, limit=limit
+    )
+
+
 @router.get("/organization/{organization_id}", response_model=List[EventResponse])
 def organization_events(organization_id: int, db: Session = Depends(get_db)):
     """
@@ -100,7 +154,7 @@ def update_event(
     event_id: int,
     event_data: EventUpdate,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Update an event.
@@ -136,7 +190,7 @@ def delete_event(
     *,
     event_id: int,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Delete an event.
@@ -173,7 +227,7 @@ def add_collaborator(
     event_id: int,
     collaborator_data: EventCollaboratorCreate,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Add a collaborating organization to an event.
@@ -215,7 +269,7 @@ def remove_collaborator(
     event_id: int,
     organization_id: int,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Remove a collaborating organization from an event.
@@ -257,7 +311,7 @@ def add_beneficiary(
     event_id: int,
     beneficiary_data: EventBeneficiaryCreate,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Add a beneficiary to an event.
