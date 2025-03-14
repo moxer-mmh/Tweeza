@@ -1,12 +1,37 @@
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 
 from app.api import api_router
 from app.core.config import settings
 from app.db.session import DatabaseConnection
 
+
+# Define the initialize_db function
+def initialize_db():
+    """Initialize database tables and connections."""
+    db_conn = DatabaseConnection()
+    db_conn.create_tables()
+    print("Database initialized successfully")
+
+
 # Initialize app
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Handle application startup and shutdown events
+    """
+    # Startup actions
+    if hasattr(settings, "INITIALIZE_DB") and settings.INITIALIZE_DB:
+        initialize_db()
+
+    yield
+
+    # Shutdown actions
+    # Any cleanup code would go here
+
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     description="Tweeza API",
@@ -14,6 +39,7 @@ app = FastAPI(
     openapi_url=f"{settings.API_STR}/openapi.json",
     docs_url=f"{settings.API_STR}/docs",
     redoc_url=f"{settings.API_STR}/redoc",
+    lifespan=lifespan,
 )
 
 # Set all CORS enabled origins
@@ -37,13 +63,6 @@ else:
 
 # Include API router
 app.include_router(api_router, prefix=settings.API_STR)
-
-
-@app.on_event("startup")
-async def startup_event():
-    """Initialize database on startup."""
-    db_connection = DatabaseConnection()
-    db_connection.create_tables()
 
 
 @app.get("/")

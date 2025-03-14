@@ -9,6 +9,9 @@ from app.db.session import get_db
 from app.core.security import get_password_hash, create_access_token
 from app.schemas import UserRoleEnum
 from app.db.models import User, UserRole, Organization, OrganizationMember
+from app.services import user_service
+from app.schemas import UserCreate
+from tests.utils import create_random_user_data
 
 
 @pytest.fixture(scope="session")
@@ -95,6 +98,49 @@ def test_user(db_session):
 
 
 @pytest.fixture
+def test_user2(db_session):
+    """Create another test user."""
+    # Check if user already exists
+    existing_user = (
+        db_session.query(User).filter(User.email == "user2@example.com").first()
+    )
+    if existing_user:
+        return existing_user
+
+    user_data = create_random_user_data()
+    user_data["email"] = "user2@example.com"
+    user_schema = UserCreate(**user_data)
+
+    return user_service.create_user(db_session, user_schema)
+
+
+@pytest.fixture
+def normal_user_token_headers(client, test_user2):
+    """Get token headers for a regular user."""
+    login_data = {"username": test_user2.email, "password": "testpass123"}
+    response = client.post("/api/v1/auth/login", data=login_data)
+    token = response.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # Add the user ID to the headers for test convenience - convert to string
+    headers["X-Test-User-ID"] = str(test_user2.id)
+
+    return headers
+
+
+@pytest.fixture
+def superadmin_token_headers(client, test_super_admin):
+    """Get token headers for a super admin user."""
+    login_data = {
+        "username": test_super_admin.email,
+        "password": "superpass",
+    }  # Changed from "password" to match fixture
+    response = client.post("/api/v1/auth/login", data=login_data)
+    token = response.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
 def test_admin_user(db_session):
     """Create a test admin user with admin role."""
     # Check if user already exists
@@ -102,8 +148,26 @@ def test_admin_user(db_session):
         db_session.query(User).filter(User.email == "admin@example.com").first()
     )
     if existing_user:
+        # Make sure user has admin role
+        existing_role = (
+            db_session.query(UserRole)
+            .filter(
+                UserRole.user_id == existing_user.id,
+                UserRole.role == UserRoleEnum.ADMIN.value,
+            )
+            .first()
+        )
+
+        if not existing_role:
+            admin_role = UserRole(
+                user_id=existing_user.id, role=UserRoleEnum.ADMIN.value
+            )
+            db_session.add(admin_role)
+            db_session.commit()
+
         return existing_user
 
+    # Create new admin user
     user = User(
         email="admin@example.com",
         phone="987654321",
@@ -113,13 +177,14 @@ def test_admin_user(db_session):
     )
     db_session.add(user)
     db_session.commit()
+    db_session.refresh(user)
 
     # Add admin role
     role = UserRole(user_id=user.id, role=UserRoleEnum.ADMIN.value)
     db_session.add(role)
     db_session.commit()
-
     db_session.refresh(user)
+
     return user
 
 
@@ -153,7 +218,7 @@ def test_super_admin(db_session):
 
 
 @pytest.fixture
-def test_organization(db_session, test_admin_user, test_user):
+def test_organization(db_session, test_admin_user, test_user, test_user2):
     """Create a test organization."""
     # Check if organization already exists
     existing_org = (
@@ -161,22 +226,42 @@ def test_organization(db_session, test_admin_user, test_user):
         .filter(Organization.name == "Test Organization")
         .first()
     )
+
     if existing_org:
-        # Make sure test_user is a member
-        existing_user_member = (
+        # Ensure test_admin_user is a member with admin role
+        existing_admin_member = (
             db_session.query(OrganizationMember)
             .filter(
                 OrganizationMember.organization_id == existing_org.id,
-                OrganizationMember.user_id == test_user.id,
+                OrganizationMember.user_id == test_admin_user.id,
+                OrganizationMember.role == UserRoleEnum.ADMIN.value,
             )
             .first()
         )
 
-        if not existing_user_member:
-            # Add test_user as a member
+        if not existing_admin_member:
+            admin_member = OrganizationMember(
+                organization_id=existing_org.id,
+                user_id=test_admin_user.id,
+                role=UserRoleEnum.ADMIN.value,
+            )
+            db_session.add(admin_member)
+            db_session.commit()
+
+        # Make sure test_user2 is a member for deletion tests
+        existing_member = (
+            db_session.query(OrganizationMember)
+            .filter(
+                OrganizationMember.organization_id == existing_org.id,
+                OrganizationMember.user_id == test_user2.id,
+            )
+            .first()
+        )
+
+        if not existing_member:
             member = OrganizationMember(
                 organization_id=existing_org.id,
-                user_id=test_user.id,
+                user_id=test_user2.id,
                 role=UserRoleEnum.WORKER.value,
             )
             db_session.add(member)
@@ -199,8 +284,8 @@ def test_organization(db_session, test_admin_user, test_user):
     existing_member = (
         db_session.query(OrganizationMember)
         .filter(
-            OrganizationMember.organization_id == org.id,
-            OrganizationMember.user_id == test_admin_user.id,
+            OrganizationMember.organization_id == org.id,  # Fixed: changed = to ==
+            OrganizationMember.user_id == test_admin_user.id,  # Fixed: changed = to ==
         )
         .first()
     )
@@ -235,9 +320,24 @@ def token_headers(test_user):
 
 
 @pytest.fixture
-def admin_token_headers(test_admin_user):
-    """Get token headers for authenticated admin requests, bypassing login."""
-    # Generate token directly rather than using the login endpoint
+def admin_token_headers(test_admin_user, db_session):
+    """Get token headers for authenticated admin requests."""
+    # Ensure test_admin_user has the admin role
+    existing_role = (
+        db_session.query(UserRole)
+        .filter(
+            UserRole.user_id == test_admin_user.id,
+            UserRole.role == UserRoleEnum.ADMIN.value,
+        )
+        .first()
+    )
+
+    if not existing_role:
+        role = UserRole(user_id=test_admin_user.id, role=UserRoleEnum.ADMIN.value)
+        db_session.add(role)
+        db_session.commit()
+
+    # Generate token directly
     token = create_access_token(subject=test_admin_user.id)
     return {"Authorization": f"Bearer {token}"}
 

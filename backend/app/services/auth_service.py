@@ -56,42 +56,54 @@ def can_manage_organization(user: User, org_id: int, db: Session) -> bool:
     return organization_service.is_user_organization_admin(db, user.id, org_id)
 
 
-def can_manage_user(admin_user: User, target_user_id: int, db: Session) -> bool:
+def can_manage_user(user: User, target_user_id: int, db: Session) -> bool:
     """
-    Check if the admin user can manage the target user.
-    Super admins can manage all users.
-    Organization admins can only manage users in their organizations.
+    Check if a user can manage another user.
+
+    Super admins can manage any user.
+    Organization admins can manage users in their organization.
+    Regular users can only manage themselves.
     """
-    # Super admins can manage all users
-    if is_super_admin(admin_user):
+    # Super admins can manage any user
+    if is_super_admin(user):
         return True
 
-    # If it's the user's own profile, they can manage it
-    if admin_user.id == target_user_id:
+    # Users can manage themselves
+    if user.id == target_user_id:
         return True
 
-    # Check if user has admin role
-    if not admin_user.has_role(UserRoleEnum.ADMIN.value):
-        return False
+    # Check if user is an organization admin
+    if user.has_role(UserRoleEnum.ADMIN.value):
+        # Get organizations where the user is admin
+        from app.db.models import OrganizationMember, Organization
 
-    # Get all organizations where the admin is an admin
-    admin_orgs = organization_service.get_user_organizations(db, admin_user.id)
+        # Get orgs where user is admin
+        admin_orgs = (
+            db.query(Organization)
+            .join(OrganizationMember)
+            .filter(
+                OrganizationMember.user_id == user.id,
+                OrganizationMember.role == UserRoleEnum.ADMIN.value,
+            )
+            .all()
+        )
 
-    # Get organization IDs where current user is an admin
-    admin_org_ids = []
-    for org in admin_orgs:
-        for member in org.members:
-            if (
-                member.user_id == admin_user.id
-                and member.role == UserRoleEnum.ADMIN.value
-            ):
-                admin_org_ids.append(org.id)
-                break
+        # Get org IDs
+        admin_org_ids = [org.id for org in admin_orgs]
+        if not admin_org_ids:
+            return False
 
-    # Check if target user is in any of the admin's organizations
-    for org_id in admin_org_ids:
-        members = organization_service.get_organization_members(db, org_id)
-        if any(m.user_id == target_user_id for m in members):
-            return True
+        # Check if target user is in any of these orgs
+        target_is_member = (
+            db.query(OrganizationMember)
+            .filter(
+                OrganizationMember.user_id == target_user_id,
+                OrganizationMember.organization_id.in_(admin_org_ids),
+            )
+            .first()
+        )
 
+        return target_is_member is not None
+
+    # Regular users can only manage themselves
     return False

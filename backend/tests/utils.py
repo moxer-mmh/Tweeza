@@ -55,11 +55,15 @@ def create_random_event_data(organization_id):
     }
 
 
-def create_random_resource_request_data():
+def create_random_resource_request_data(event_id=None):
     """Generate random resource request data for testing."""
     import random
 
+    resource_types = [r.value for r in ResourceTypeEnum]
+
     return {
-        "resource_type": random.choice([r.value for r in ResourceTypeEnum]),
+        "event_id": event_id,
+        "resource_type": random.choice(resource_types),
         "quantity_needed": random.randint(5, 100),
+        "quantity_received": 0,
     }

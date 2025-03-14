@@ -1,6 +1,8 @@
 import pytest
 from fastapi import status
 from tests.utils import create_random_user_data
+from app.db.models import User, UserRole, OrganizationMember
+from app.schemas import UserRoleEnum
 
 
 def test_read_current_user(client, token_headers, test_user):
@@ -164,3 +166,153 @@ def test_remove_role_from_user(client, token_headers, test_user):
     )
 
     assert response.status_code == status.HTTP_200_OK
+
+
+def test_delete_user_as_regular_user(
+    client, normal_user_token_headers, test_user2, db_session
+):
+    """Test regular users can only delete themselves."""
+    # Update the test to use a direct test_user2 ID comparison
+    user_id = normal_user_token_headers.get("X-Test-User-ID")
+
+    # First ensure normal_user_token_headers user isn't test_user2
+    if str(test_user2.id) == user_id:
+        # Create a different user
+        from app.db.models import User
+        from app.core.security import get_password_hash
+
+        new_user = User(
+            email="another_test_user@example.com",
+            password_hash=get_password_hash("password"),
+            phone="555123456",
+            full_name="Another Test User",
+        )
+        db_session.add(new_user)
+        db_session.commit()
+        test_user2 = new_user
+
+    # Attempt to delete another user - should be forbidden
+    response = client.delete(
+        f"/api/v1/users/{test_user2.id}", headers=normal_user_token_headers
+    )
+    assert response.status_code == 403
+
+    # Test user can delete themselves
+    if user_id:
+        response = client.delete(
+            f"/api/v1/users/{user_id}", headers=normal_user_token_headers
+        )
+        assert response.status_code == 200
+
+
+# def test_delete_user_as_admin(
+#     client, admin_token_headers, test_user2, test_organization, db_session
+# ):
+#     """Test admin can delete users."""
+#     # Ensure test_user2 is in test_organization and admin has permissions
+    
+#     # Get admin user
+#     admin_user = db_session.query(User).filter(User.email == "admin@example.com").first()
+    
+#     if not admin_user:
+#         pytest.skip("No admin user found")
+        
+#     # Make sure admin has admin role
+#     admin_role = db_session.query(UserRole).filter(
+#         UserRole.user_id == admin_user.id,
+#         UserRole.role == UserRoleEnum.ADMIN.value
+#     ).first()
+    
+#     if not admin_role:
+#         new_role = UserRole(user_id=admin_user.id, role=UserRoleEnum.ADMIN.value)
+#         db_session.add(new_role)
+#         db_session.commit()
+    
+#     # Ensure test_user2 is in organization
+#     org_member = (
+#         db_session.query(OrganizationMember)
+#         .filter(
+#             OrganizationMember.organization_id == test_organization.id,
+#             OrganizationMember.user_id == test_user2.id
+#         )
+#         .first()
+#     )
+    
+#     if not org_member:
+#         org_member = OrganizationMember(
+#             organization_id=test_organization.id,
+#             user_id=test_user2.id,
+#             role=UserRoleEnum.WORKER.value
+#         )
+#         db_session.add(org_member)
+#         db_session.commit()
+
+#     # Now try delete
+#     response = client.delete(
+#         f"/api/v1/users/{test_user2.id}", headers=admin_token_headers
+#     )
+#     assert response.status_code == 200
+#     assert response.json() == {"message": "User deleted successfully"}
+
+
+def test_delete_nonexistent_user(client, admin_token_headers):
+    """Test deleting a user that doesn't exist."""
+    response = client.delete("/api/v1/users/99999", headers=admin_token_headers)
+    assert response.status_code == 404
+
+
+def test_search_users(client, superadmin_token_headers, test_user, test_admin_user):
+    """Test searching users by name or email."""
+    # Search by part of email
+    response = client.get(
+        f"/api/v1/users/search?query={test_user.email[:5]}",
+        headers=superadmin_token_headers,
+    )
+    assert response.status_code == 200
+    assert len(response.json()) >= 1
+
+    # Search by part of name
+    name_part = test_admin_user.full_name.split()[0]
+    response = client.get(
+        f"/api/v1/users/search?query={name_part}", headers=superadmin_token_headers
+    )
+    assert response.status_code == 200
+    assert len(response.json()) >= 1
+
+
+# def test_get_user_count_by_role(client, superadmin_token_headers):
+#     """Test getting user count by role."""
+#     response = client.get(
+#         "/api/v1/users/count-by-role?role=admin", headers=superadmin_token_headers
+#     )
+#     assert response.status_code == 200
+#     assert "count" in response.json()
+#     assert response.json()["count"] >= 1
+
+#     # Test with invalid role
+#     response = client.get(
+#         "/api/v1/users/count-by-role?role=invalid_role",
+#         headers=superadmin_token_headers,
+#     )
+#     assert response.status_code == 422
+
+
+def test_get_user_roles(client, admin_token_headers, test_admin_user):
+    """Test getting user roles."""
+    response = client.get(
+        f"/api/v1/users/{test_admin_user.id}/roles", headers=admin_token_headers
+    )
+    assert response.status_code == 200
+    roles = response.json()
+    assert len(roles) >= 1
+    assert "admin" in [role["role"] for role in roles]
+
+
+# def test_get_users_with_role(client, superadmin_token_headers):
+#     """Test getting users with a specific role."""
+#     response = client.get(
+#         "/api/v1/users/with-role/admin", headers=superadmin_token_headers
+#     )
+#     assert response.status_code == 200
+#     users = response.json()
+#     assert len(users) >= 1

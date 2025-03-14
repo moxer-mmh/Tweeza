@@ -11,8 +11,8 @@ import platform
 # Add the project root directory to sys.path
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-# Import the SQLAlchemy database models
-from app.db import (
+# Import the SQLAlchemy database models directly from models folder
+from app.db.models import (
     User,
     UserRole,
     Organization,
@@ -22,8 +22,8 @@ from app.db import (
     ResourceContribution,
     ResourceRequest,
     EventBeneficiary,
-    Base,
 )
+from app.db.base import Base
 
 # Set up the database URL
 system = platform.system()

@@ -16,10 +16,14 @@ class Settings(BaseSettings):
     # SECURITY
     SECRET_KEY: str = os.getenv("SECRET_KEY", secrets.token_urlsafe(32))
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
 
     # CORS
-    BACKEND_CORS_ORIGINS: List[str] = []
+    BACKEND_CORS_ORIGINS: List[str] = [
+        "http://localhost",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
 
     # ENVIRONMENT
     APP_ENV: str = os.getenv("APP_ENV", "development")
@@ -32,6 +36,9 @@ class Settings(BaseSettings):
     # DATABASE
     # We get this dynamically from the session.py in our implementation
     DATABASE_URL: Optional[str] = None
+
+    # Database initialization
+    INITIALIZE_DB: bool = True
 
     class Config:
         case_sensitive = True
