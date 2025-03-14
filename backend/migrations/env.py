@@ -12,7 +12,6 @@ import platform
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 # Import the SQLAlchemy database models
-from app.db.models.base import Base
 from app.db import (
     User,
     UserRole,
@@ -24,9 +23,6 @@ from app.db import (
     ResourceRequest,
     EventBeneficiary,
     Base,
-    UserRoleEnum,
-    EventTypeEnum,
-    ResourceTypeEnum,
 )
 
 # Set up the database URL

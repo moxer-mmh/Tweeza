@@ -1,7 +1,7 @@
 # backend/app/db/models/event.py
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Enum
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
-from .base import Base, EventTypeEnum
+from ..base import Base
 
 
 class Event(Base):
@@ -9,7 +9,7 @@ class Event(Base):
 
     id = Column(Integer, primary_key=True)
     title = Column(String(128), nullable=False)
-    event_type = Column(Enum(EventTypeEnum))
+    event_type = Column(String(50), nullable=False)
     start_time = Column(DateTime)
     end_time = Column(DateTime)
     organization_id = Column(Integer, ForeignKey("organizations.id"))

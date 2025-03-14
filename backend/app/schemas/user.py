@@ -17,7 +17,7 @@ class UserRoleCreate(BaseModel):
 class UserRoleResponse(BaseModel):
     role: UserRoleEnum
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, use_enum_values=True)
 
 
 class UserBase(BaseModel):
@@ -48,7 +48,7 @@ class UserResponse(UserBase):
     id: int
     roles: List[UserRoleResponse] = []
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, use_enum_values=True)
 
 
 class UserLogin(BaseModel):

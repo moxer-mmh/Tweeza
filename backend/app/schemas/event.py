@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
 from datetime import datetime
 from enum import Enum
@@ -33,7 +33,7 @@ class EventUpdate(BaseModel):
 class EventResponse(EventBase):
     id: int
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, use_enum_values=True)
 
 
 class EventCollaboratorBase(BaseModel):
@@ -46,7 +46,7 @@ class EventCollaboratorCreate(BaseModel):
 
 
 class EventCollaboratorResponse(EventCollaboratorBase):
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, use_enum_values=True)
 
 
 class EventBeneficiaryBase(BaseModel):
@@ -60,4 +60,4 @@ class EventBeneficiaryCreate(BaseModel):
 
 
 class EventBeneficiaryResponse(EventBeneficiaryBase):
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, use_enum_values=True)

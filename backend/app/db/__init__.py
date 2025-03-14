@@ -1,4 +1,5 @@
 from .session import DatabaseConnection, get_db
+from .base import Base
 from .models import (
     User,
     UserRole,
@@ -9,10 +10,6 @@ from .models import (
     ResourceContribution,
     ResourceRequest,
     EventBeneficiary,
-    Base,
-    UserRoleEnum,
-    EventTypeEnum,
-    ResourceTypeEnum,
 )
 
 
@@ -27,9 +24,6 @@ __all__ = [
     "EventCollaborator",
     "ResourceContribution",
     "ResourceRequest",
-    EventBeneficiary,
+    "EventBeneficiary",
     Base,
-    UserRoleEnum,
-    EventTypeEnum,
-    ResourceTypeEnum,
 ]

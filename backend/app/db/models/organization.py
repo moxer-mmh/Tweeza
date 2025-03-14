@@ -1,7 +1,7 @@
 # backend/app/db/models/organization.py
-from sqlalchemy import Column, String, Integer, ForeignKey, Enum, Text, Float
+from sqlalchemy import Column, Integer, Enum, String, ForeignKey, Text, Float
 from sqlalchemy.orm import relationship
-from .base import Base, UserRoleEnum
+from ..base import Base
 
 
 class Organization(Base):
@@ -23,7 +23,7 @@ class OrganizationMember(Base):
 
     organization_id = Column(Integer, ForeignKey("organizations.id"), primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
-    role = Column(Enum(UserRoleEnum))
+    role = Column(String(50), nullable=False)
 
     organization = relationship("Organization", back_populates="members")
     user = relationship("User", back_populates="organizations")

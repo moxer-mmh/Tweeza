@@ -1,8 +1,8 @@
 # backend/app/db/models/resource.py
-from sqlalchemy import Column, Integer, Enum, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
-from .base import Base, ResourceTypeEnum
+from ..base import Base
 
 
 class ResourceRequest(Base):
@@ -10,7 +10,7 @@ class ResourceRequest(Base):
 
     id = Column(Integer, primary_key=True)
     event_id = Column(Integer, ForeignKey("events.id"))
-    resource_type = Column(Enum(ResourceTypeEnum))
+    resource_type = Column(String(50), nullable=False)
     quantity_needed = Column(Integer)
     quantity_received = Column(Integer, default=0)
 

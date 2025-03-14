@@ -3,12 +3,6 @@ from .organization import Organization, OrganizationMember
 from .event import Event, EventCollaborator
 from .resource import ResourceContribution, ResourceRequest
 from .beneficiary import EventBeneficiary
-from .base import (
-    Base,
-    UserRoleEnum,
-    EventTypeEnum,
-    ResourceTypeEnum,
-)
 
 
 __all__ = [
@@ -20,9 +14,5 @@ __all__ = [
     "EventCollaborator",
     "ResourceContribution",
     "ResourceRequest",
-    EventBeneficiary,
-    Base,
-    UserRoleEnum,
-    EventTypeEnum,
-    ResourceTypeEnum,
+    "EventBeneficiary",
 ]

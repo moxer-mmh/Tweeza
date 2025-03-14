@@ -1,8 +1,8 @@
-"""Restructured the database
+"""init db
 
-Revision ID: 03624c13ab5d
+Revision ID: 9ecc2b699bd7
 Revises: 
-Create Date: 2025-03-14 09:40:03.335349
+Create Date: 2025-03-14 12:16:29.767948
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '03624c13ab5d'
+revision: str = '9ecc2b699bd7'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -47,7 +47,7 @@ def upgrade() -> None:
     op.create_table('events',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('title', sa.String(length=128), nullable=False),
-    sa.Column('event_type', sa.Enum('IFTAR', 'CLEANUP', 'EMERGENCY', 'WORKSHOP', name='eventtypeenum'), nullable=True),
+    sa.Column('event_type', sa.String(length=50), nullable=False),
     sa.Column('start_time', sa.DateTime(), nullable=True),
     sa.Column('end_time', sa.DateTime(), nullable=True),
     sa.Column('organization_id', sa.Integer(), nullable=True),
@@ -57,14 +57,14 @@ def upgrade() -> None:
     op.create_table('organization_members',
     sa.Column('organization_id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
-    sa.Column('role', sa.Enum('ADMIN', 'WORKER', 'VOLUNTEER', 'BENEFICIARY', name='userroleenum'), nullable=True),
+    sa.Column('role', sa.String(length=50), nullable=False),
     sa.ForeignKeyConstraint(['organization_id'], ['organizations.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('organization_id', 'user_id')
     )
     op.create_table('user_roles',
     sa.Column('user_id', sa.Integer(), nullable=False),
-    sa.Column('role', sa.Enum('ADMIN', 'WORKER', 'VOLUNTEER', 'BENEFICIARY', name='userroleenum'), nullable=False),
+    sa.Column('role', sa.String(length=50), nullable=False),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('user_id', 'role')
     )
@@ -86,7 +86,7 @@ def upgrade() -> None:
     op.create_table('resource_requests',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('event_id', sa.Integer(), nullable=True),
-    sa.Column('resource_type', sa.Enum('FOOD', 'MONEY', 'MATERIALS', 'TIME', name='resourcetypeenum'), nullable=True),
+    sa.Column('resource_type', sa.String(length=50), nullable=False),
     sa.Column('quantity_needed', sa.Integer(), nullable=True),
     sa.Column('quantity_received', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['event_id'], ['events.id'], ),

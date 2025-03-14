@@ -32,7 +32,7 @@ class ResourceRequestUpdate(BaseModel):
 class ResourceRequestResponse(ResourceRequestBase):
     id: int
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, use_enum_values=True)
 
 
 class ResourceContributionBase(BaseModel):
@@ -54,4 +54,4 @@ class ResourceContributionUpdate(BaseModel):
 class ResourceContributionResponse(ResourceContributionBase):
     id: int
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, use_enum_values=True)

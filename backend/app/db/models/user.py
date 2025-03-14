@@ -1,7 +1,7 @@
 # backend/app/db/models/user.py
-from sqlalchemy import Column, String, Integer, Float, Enum, ForeignKey
+from sqlalchemy import Column, String, Integer, Float, ForeignKey
 from sqlalchemy.orm import relationship
-from .base import Base, UserRoleEnum
+from ..base import Base
 
 
 class User(Base):
@@ -24,13 +24,14 @@ class User(Base):
     contributions = relationship("ResourceContribution", back_populates="user")
     benefited_events = relationship("EventBeneficiary", back_populates="user")
 
-    def has_role(self, role: UserRoleEnum) -> bool:
-        return any(r.role == role for r in self.roles)
+    def has_role(self, role):
+        role_value = role.value if hasattr(role, "value") else role
+        return any(r.role == role_value for r in self.roles)
 
 
 class UserRole(Base):
     __tablename__ = "user_roles"
 
     user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
-    role = Column(Enum(UserRoleEnum), primary_key=True)
+    role = Column(String(50), primary_key=True)
     user = relationship("User", back_populates="roles")
