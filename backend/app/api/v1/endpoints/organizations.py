@@ -12,7 +12,7 @@ from app.schemas import (
     OrganizationMemberResponse,
     UserRoleEnum,
 )
-from app.services import organization_service
+from app.services import organization_service, auth_service
 
 router = APIRouter()
 
@@ -76,22 +76,11 @@ def update_organization(
     """
     Update an organization.
     """
-    # Check if user is a member with admin role
-    orgs = organization_service.get_user_organizations(db, current_user.id)
-    is_admin = any(
-        org.id == organization_id
-        and any(
-            m.role == UserRoleEnum.ADMIN.value
-            for m in org.members
-            if m.user_id == current_user.id
-        )
-        for org in orgs
-    )
-
-    if not is_admin:
+    # Check if user can manage this organization (super admin or org admin)
+    if not auth_service.can_manage_organization(current_user, organization_id, db):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions",
+            detail="Not enough permissions to manage this organization",
         )
 
     try:
@@ -118,22 +107,11 @@ def delete_organization(
     """
     Delete an organization.
     """
-    # Check if user is a member with admin role
-    orgs = organization_service.get_user_organizations(db, current_user.id)
-    is_admin = any(
-        org.id == organization_id
-        and any(
-            m.role == UserRoleEnum.ADMIN.value
-            for m in org.members
-            if m.user_id == current_user.id
-        )
-        for org in orgs
-    )
-
-    if not is_admin:
+    # Only super admins or the organization's admin can delete it
+    if not auth_service.can_manage_organization(current_user, organization_id, db):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions",
+            detail="Not enough permissions to delete this organization",
         )
 
     success = organization_service.delete_organization(db, organization_id)
@@ -154,31 +132,27 @@ def add_member(
     """
     Add a member to organization.
     """
-    # Check if user is a member with admin role
-    orgs = organization_service.get_user_organizations(db, current_user.id)
-    is_admin = any(
-        org.id == organization_id
-        and any(
-            m.role == UserRoleEnum.ADMIN.value
-            for m in org.members
-            if m.user_id == current_user.id
-        )
-        for org in orgs
-    )
-
-    if not is_admin:
+    # Only super admins or the organization's admin can add members
+    if not auth_service.can_manage_organization(current_user, organization_id, db):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions",
+            detail="Not enough permissions to manage this organization",
         )
 
-    member = organization_service.add_member_to_organization(
-        db, organization_id, member_data
-    )
-    if not member:
-        raise HTTPException(status_code=404, detail="User or organization not found")
-
-    return member
+    try:
+        member = organization_service.add_member_to_organization(
+            db, organization_id, member_data
+        )
+        if not member:
+            raise HTTPException(
+                status_code=404, detail="User or organization not found"
+            )
+        return member
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
 
 
 @router.delete("/{organization_id}/members/{user_id}")
@@ -192,31 +166,28 @@ def remove_member(
     """
     Remove a member from organization.
     """
-    # Check if user is a member with admin role
-    orgs = organization_service.get_user_organizations(db, current_user.id)
-    is_admin = any(
-        org.id == organization_id
-        and any(
-            m.role == UserRoleEnum.ADMIN.value
-            for m in org.members
-            if m.user_id == current_user.id
-        )
-        for org in orgs
-    )
-
-    if not is_admin and current_user.id != user_id:
+    # A user can remove themselves, or a super admin or org admin can remove members
+    if current_user.id != user_id and not auth_service.can_manage_organization(
+        current_user, organization_id, db
+    ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions",
+            detail="Not enough permissions to manage this organization",
         )
 
-    success = organization_service.remove_member_from_organization(
-        db, organization_id, user_id
-    )
-    if not success:
-        raise HTTPException(status_code=404, detail="Member not found")
+    try:
+        success = organization_service.remove_member_from_organization(
+            db, organization_id, user_id
+        )
+        if not success:
+            raise HTTPException(status_code=404, detail="Member not found")
 
-    return {"message": "Member removed successfully"}
+        return {"message": "Member removed successfully"}
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
 
 
 @router.get(

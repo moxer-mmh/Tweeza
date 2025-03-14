@@ -60,6 +60,82 @@ def create_user(db: Session, user_data: UserCreate) -> User:
     return db_user
 
 
+def get_organization_users(
+    db: Session, org_ids: List[int], skip: int = 0, limit: int = 100
+) -> List[User]:
+    """
+    Get users who are members of specified organizations with pagination.
+
+    Args:
+        db: Database session
+        org_ids: List of organization IDs
+        skip: Number of records to skip (pagination)
+        limit: Maximum number of records to return (pagination)
+
+    Returns:
+        List of User objects who are members of the specified organizations
+    """
+    from app.db.models import OrganizationMember
+
+    # Query users who are members of the specified organizations
+    users = (
+        db.query(User)
+        .join(OrganizationMember, User.id == OrganizationMember.user_id)
+        .filter(OrganizationMember.organization_id.in_(org_ids))
+        .distinct()
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+
+    return users
+
+
+def get_user_organizations(db: Session, user_id: int) -> List:
+    """
+    Get organizations that a user is a member of.
+
+    Args:
+        db: Database session
+        user_id: User ID
+
+    Returns:
+        List of Organization objects
+    """
+    from app.db.models import Organization, OrganizationMember
+
+    organizations = (
+        db.query(Organization)
+        .join(OrganizationMember, Organization.id == OrganizationMember.organization_id)
+        .filter(OrganizationMember.user_id == user_id)
+        .all()
+    )
+
+    return organizations
+
+
+def count_users_with_role(db: Session, role: UserRoleEnum) -> int:
+    """
+    Count the number of users with a specific role.
+
+    Args:
+        db: Database session
+        role: Role to count
+
+    Returns:
+        Number of users with the specified role
+    """
+    count = (
+        db.query(User)
+        .join(UserRole, User.id == UserRole.user_id)
+        .filter(UserRole.role == role)
+        .distinct()
+        .count()
+    )
+
+    return count
+
+
 def update_user(db: Session, user_id: int, user_data: UserUpdate) -> Optional[User]:
     """Update an existing user."""
     db_user = get_user(db, user_id)
