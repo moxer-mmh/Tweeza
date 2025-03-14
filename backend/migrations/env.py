@@ -15,20 +15,18 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from app.db.models.base import Base
 from app.db import (
     User,
-    Volunteer,
-    VolunteerSkill,
+    UserRole,
     Organization,
     OrganizationMember,
-    Organizer,
-    Beneficiary,
-    AssistanceRecord,
     Event,
-    EventParticipant,
-    EventGallery,
-    Notification,
+    EventCollaborator,
     ResourceContribution,
     ResourceRequest,
-    Skill,
+    EventBeneficiary,
+    Base,
+    UserRoleEnum,
+    EventTypeEnum,
+    ResourceTypeEnum,
 )
 
 # Set up the database URL
