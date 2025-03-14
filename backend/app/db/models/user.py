@@ -1,33 +1,36 @@
 # backend/app/db/models/user.py
-from sqlalchemy import Column, String, Integer, Float, DateTime, Enum
-from sqlalchemy.orm import relationship, validates
-from .base import Base, TimeStampMixin, UserRole
-import re
+from sqlalchemy import Column, String, Integer, Float, Enum, ForeignKey
+from sqlalchemy.orm import relationship
+from .base import Base, UserRoleEnum
 
 
-class User(Base, TimeStampMixin):
+class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True)
-    email = Column(String(120), unique=True, nullable=False)
+    email = Column(String(128), unique=True, nullable=False)
     phone = Column(String(20), unique=True, nullable=False)
     password_hash = Column(String(128), nullable=False)
     full_name = Column(String(128), nullable=False)
     location = Column(String(128))
     latitude = Column(Float)
     longitude = Column(Float)
-    role = Column(Enum(UserRole), nullable=False, default=UserRole.VOLUNTEER)
-    last_login = Column(DateTime)
 
-    # Role relationships (all optional)
-    organizer_profile = relationship("Organizer", back_populates="user", uselist=False)
-    volunteer_profile = relationship("Volunteer", back_populates="user", uselist=False)
-    beneficiary_profile = relationship(
-        "Beneficiary", back_populates="user", uselist=False
+    # Relationships
+    roles = relationship(
+        "UserRole", back_populates="user", cascade="all, delete-orphan"
     )
+    organizations = relationship("OrganizationMember", back_populates="user")
+    contributions = relationship("ResourceContribution", back_populates="user")
+    benefited_events = relationship("EventBeneficiary", back_populates="user")
 
-    @validates("phone")
-    def validate_phone(self, key, phone):
-        if not re.match(r"^\+213[5-7]\d{8}$", phone):
-            raise ValueError("Invalid Algerian phone number")
-        return phone
+    def has_role(self, role: UserRoleEnum) -> bool:
+        return any(r.role == role for r in self.roles)
+
+
+class UserRole(Base):
+    __tablename__ = "user_roles"
+
+    user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
+    role = Column(Enum(UserRoleEnum), primary_key=True)
+    user = relationship("User", back_populates="roles")
