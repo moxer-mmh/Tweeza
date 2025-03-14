@@ -276,3 +276,43 @@ def test_search_events_by_address(client, admin_token_headers, test_organization
     data = response.json()
     assert len(data) >= 1
     assert any(e["title"] == "Ramadan Iftar" for e in data)
+
+
+def test_search_events_by_title(client, admin_token_headers, test_organization):
+    """Test searching events by title."""
+    from app.schemas import EventTypeEnum
+    from datetime import datetime, timedelta
+
+    # Create test event with a unique title
+    event_data = {
+        "title": "Special Ramadan Celebration",
+        "event_type": EventTypeEnum.IFTAR.value,
+        "start_time": (datetime.now() + timedelta(days=1)).isoformat(),
+        "end_time": (datetime.now() + timedelta(days=1, hours=2)).isoformat(),
+        "organization_id": test_organization.id,
+        "address": "Somewhere in Algeria",
+    }
+
+    # Create the event
+    create_response = client.post(
+        "/api/v1/events/", json=event_data, headers=admin_token_headers
+    )
+    assert create_response.status_code == 200
+
+    # Test search endpoint with title parameter
+    response = client.get("/api/v1/events/search", params={"title": "Special Ramadan"})
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) >= 1
+    assert any(e["title"] == "Special Ramadan Celebration" for e in data)
+
+    # Test combined search (should find the same event)
+    response = client.get(
+        "/api/v1/events/search", params={"title": "Special", "address": "Algeria"}
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) >= 1
+    assert any(e["title"] == "Special Ramadan Celebration" for e in data)

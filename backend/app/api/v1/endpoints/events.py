@@ -104,24 +104,45 @@ def nearby_events(
 
 @router.get("/search", response_model=List[EventResponse])
 def search_events(
-    address: str,
+    address: Optional[str] = None,
+    title: Optional[str] = None,
     event_type: Optional[str] = None,
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
 ):
     """
-    Search for events by address text.
+    Search for events by address or title text.
     Optionally filter by event type.
     """
-    if not address or len(address.strip()) < 2:
+    # Ensure at least one search parameter is provided
+    if not address and not title:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Either address or title search parameter is required",
+        )
+
+    # Validate address if provided
+    if address and len(address.strip()) < 2:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Address search term must be at least 2 characters",
         )
 
-    return event_service.search_events_by_address(
-        db, address_query=address, event_type=event_type, skip=skip, limit=limit
+    # Validate title if provided
+    if title and len(title.strip()) < 2:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Title search term must be at least 2 characters",
+        )
+
+    return event_service.search_events(
+        db,
+        title_query=title,
+        address_query=address,
+        event_type=event_type,
+        skip=skip,
+        limit=limit,
     )
 
 

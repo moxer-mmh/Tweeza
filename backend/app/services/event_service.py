@@ -304,6 +304,37 @@ def get_nearby_events(
     return nearby_events[skip : skip + limit]
 
 
+def search_events(
+    db: Session,
+    title_query: Optional[str] = None,
+    address_query: Optional[str] = None,
+    event_type: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 100,
+) -> List[Event]:
+    """
+    Search for events by title, address, or both.
+    Optionally filter by event type.
+    """
+    # Base query
+    query = db.query(Event)
+
+    # Search in title field if provided
+    if title_query:
+        query = query.filter(Event.title.ilike(f"%{title_query}%"))
+
+    # Search in address field if provided
+    if address_query:
+        query = query.filter(Event.address.ilike(f"%{address_query}%"))
+
+    # Filter by event type if provided
+    if event_type:
+        query = query.filter(Event.event_type == event_type)
+
+    # Apply ordering, skip and limit
+    return query.order_by(Event.start_time).offset(skip).limit(limit).all()
+
+
 def search_events_by_address(
     db: Session,
     address_query: str,
@@ -315,15 +346,7 @@ def search_events_by_address(
     Search for events by address text.
     Optionally filter by event type.
     """
-    # Base query
-    query = db.query(Event)
-
-    # Search in address field using LIKE
-    query = query.filter(Event.address.ilike(f"%{address_query}%"))
-
-    # Filter by event type if provided
-    if event_type:
-        query = query.filter(Event.event_type == event_type)
-
-    # Apply ordering, skip and limit
-    return query.order_by(Event.start_time).offset(skip).limit(limit).all()
+    # For backward compatibility, call the new search function
+    return search_events(
+        db, address_query=address_query, event_type=event_type, skip=skip, limit=limit
+    )
