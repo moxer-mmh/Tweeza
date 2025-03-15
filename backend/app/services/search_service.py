@@ -88,11 +88,10 @@ def search_events(
     sort_order: str = "asc",
 ) -> List[Event]:
     """
-    Search for events by title or description.
+    Search for events by title.
     """
     search_query = db.query(Event).filter(
         func.lower(Event.title).contains(func.lower(query))
-        | func.lower(Event.description).contains(func.lower(query))
     )
 
     # Apply additional filters
@@ -335,13 +334,10 @@ def combined_search(
             )
             results["events"] = events
         else:
-            # Full-text search for events
+            # Full-text search for events - only search in title field
             events_query = (
                 db.query(Event)
-                .filter(
-                    func.lower(Event.title).contains(func.lower(query))
-                    | func.lower(Event.description).contains(func.lower(query))
-                )
+                .filter(func.lower(Event.title).contains(func.lower(query)))
                 .offset(skip)
                 .limit(entity_limit)
                 .all()

@@ -163,13 +163,6 @@ def get_event_statistics(db: Session) -> Dict[str, Any]:
     # Total events
     total_events = db.query(Event).count()
 
-    # Events by status
-    events_by_status = (
-        db.query(Event.status, func.count(Event.id).label("count"))
-        .group_by(Event.status)
-        .all()
-    )
-
     # Events by organization
     events_by_org = (
         db.query(Organization.name, func.count(Event.id).label("count"))
@@ -180,9 +173,7 @@ def get_event_statistics(db: Session) -> Dict[str, Any]:
 
     return {
         "total_events": total_events,
-        "events_by_status": [
-            {"status": status, "count": count} for status, count in events_by_status
-        ],
+        # Remove events_by_status since status field doesn't exist
         "events_by_organization": [
             {"organization": org, "count": count} for org, count in events_by_org
         ],
