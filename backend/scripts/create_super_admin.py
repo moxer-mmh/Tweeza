@@ -1,87 +1,101 @@
+#!/usr/bin/env python3
+"""
+Script to create a super admin user for Tweeza platform.
+"""
 import sys
+import argparse
+from pathlib import Path
 import os
+
+# Add parent directory to path to import app modules
+sys.path.append(str(Path(__file__).parent.parent))
+
 from sqlalchemy.orm import Session
-
-# Add the project root directory to sys.path
-sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
-
-from app.db.session import DatabaseConnection
-from app.db.models import User, UserRole
+from app.db.session import SessionLocal
 from app.schemas import UserRoleEnum
+from app.services import user_service
 from app.core.security import get_password_hash
+from app.db.models import User, UserRole
 
 
-def create_super_admin(email: str, password: str, full_name: str, phone: str):
-    """
-    Create a super admin user.
-    """
-    db_instance = DatabaseConnection()
-    db_instance.create_tables()  # Ensure tables are created
+def setup_argparse():
+    """Configure the argument parser."""
+    parser = argparse.ArgumentParser(description="Create a super admin user")
 
-    session = db_instance.get_session()
+    parser.add_argument("--email", required=True, help="Admin email address")
+    parser.add_argument("--password", required=True, help="Admin password")
+    parser.add_argument("--name", required=True, help="Admin full name")
+    parser.add_argument("--phone", required=True, help="Admin phone number")
+    parser.add_argument("--location", default="Default Location", help="Admin location")
+    parser.add_argument(
+        "--latitude", type=float, default=0.0, help="Latitude coordinate"
+    )
+    parser.add_argument(
+        "--longitude", type=float, default=0.0, help="Longitude coordinate"
+    )
+
+    return parser
+
+
+def create_super_admin(db: Session, args):
+    """Create a super admin user or add super admin role to existing user."""
+    # Check if user exists
+    user = user_service.get_user_by_email(db, args.email)
+
+    if not user:
+        # Create new user
+        user = User(
+            email=args.email,
+            full_name=args.name,
+            password_hash=get_password_hash(args.password),
+            phone=args.phone,
+            location=args.location,
+            latitude=args.latitude,
+            longitude=args.longitude,
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        print(f"Created new user: {user.email}")
+    else:
+        print(f"User {user.email} already exists")
+
+    # Check if user already has super admin role
+    super_admin_role = (
+        db.query(UserRole)
+        .filter(
+            UserRole.user_id == user.id, UserRole.role == UserRoleEnum.SUPER_ADMIN.value
+        )
+        .first()
+    )
+
+    if not super_admin_role:
+        # Add super admin role
+        new_role = UserRole(user_id=user.id, role=UserRoleEnum.SUPER_ADMIN.value)
+        db.add(new_role)
+        db.commit()
+        print(f"Super admin role added to user {user.email}")
+        return f"Super admin user {user.email} created successfully."
+    else:
+        print(f"User {user.email} already has super admin role")
+        return f"Added super admin role to existing user {user.email}."
+
+
+def main():
+    """Main function to create a super admin user."""
+    parser = setup_argparse()
+    args = parser.parse_args()
 
     try:
-        # Check if user exists
-        existing_user = session.query(User).filter(User.email == email).first()
-
-        if existing_user:
-            # If user exists, add super_admin role if they don't have it
-            existing_role = (
-                session.query(UserRole)
-                .filter(
-                    UserRole.user_id == existing_user.id,
-                    UserRole.role == UserRoleEnum.SUPER_ADMIN.value,
-                )
-                .first()
-            )
-
-            if existing_role:
-                print(f"User {email} already exists and has super_admin role.")
-                return
-
-            # Add super_admin role
-            super_admin_role = UserRole(
-                user_id=existing_user.id, role=UserRoleEnum.SUPER_ADMIN.value
-            )
-            session.add(super_admin_role)
-            session.commit()
-
-            print(f"Added super_admin role to existing user {email}.")
-        else:
-            # Create new user
-            new_user = User(
-                email=email,
-                phone=phone,
-                password_hash=get_password_hash(password),
-                full_name=full_name,
-            )
-
-            session.add(new_user)
-            session.commit()
-            session.refresh(new_user)
-
-            # Add super_admin role
-            super_admin_role = UserRole(
-                user_id=new_user.id, role=UserRoleEnum.SUPER_ADMIN.value
-            )
-            session.add(super_admin_role)
-            session.commit()
-
-            print(f"Created new super admin user: {email}")
-
+        db = SessionLocal()
+        result = create_super_admin(db, args)
+        print(result)
+    except Exception as e:
+        print(f"Error creating super admin: {str(e)}")
+        sys.exit(1)
     finally:
-        db_instance.close_session()
+        db.close()
 
 
 if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser(description="Create a super admin user")
-    parser.add_argument("--email", required=True, help="Email address")
-    parser.add_argument("--password", required=True, help="Password")
-    parser.add_argument("--full-name", required=True, help="Full name")
-    parser.add_argument("--phone", required=True, help="Phone number")
-
-    args = parser.parse_args()
-
-    create_super_admin(args.email, args.password, args.full_name, args.phone)
+    main()

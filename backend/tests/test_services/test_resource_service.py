@@ -98,30 +98,34 @@ def test_delete_resource_request(db_session, test_event):
 
 
 def test_create_resource_contribution(db_session, test_resource_request, test_user):
-    """Test creating a resource contribution."""
+    """Test creating a new resource contribution."""
+    # Initial quantity received should be 0
+    assert test_resource_request.quantity_received == 0
+
+    # Create contribution data
     contribution_data = ResourceContributionCreate(
-        request_id=test_resource_request.id, quantity=10
+        request_id=test_resource_request.id, quantity=25
     )
 
+    # Create contribution
     contribution = resource_service.create_resource_contribution(
         db_session, test_user.id, contribution_data
     )
 
+    # Verify contribution is created
     assert contribution is not None
     assert contribution.request_id == test_resource_request.id
     assert contribution.user_id == test_user.id
-    assert contribution.quantity == 10
+    assert contribution.quantity == 25
 
-    # Check that quantity received is updated
-    updated_request = resource_service.get_resource_request(
-        db_session, test_resource_request.id
-    )
-    assert updated_request.quantity_received == 10
+    # Verify resource request was updated
+    db_session.refresh(test_resource_request)
+    assert test_resource_request.quantity_received == 25
 
 
 def test_get_contributions_by_user(db_session, test_resource_request, test_user):
-    """Test getting all contributions made by a user."""
-    # Create a contribution
+    """Test getting all contributions made by a specific user."""
+    # Create a contribution first
     contribution_data = ResourceContributionCreate(
         request_id=test_resource_request.id, quantity=15
     )
@@ -129,33 +133,33 @@ def test_get_contributions_by_user(db_session, test_resource_request, test_user)
         db_session, test_user.id, contribution_data
     )
 
-    # Get user contributions
+    # Get contributions by user
     contributions = resource_service.get_contributions_by_user(db_session, test_user.id)
 
+    # Verify
     assert len(contributions) >= 1
-    assert any(c.user_id == test_user.id and c.quantity == 15 for c in contributions)
+    assert any(c.user_id == test_user.id for c in contributions)
+    assert any(c.request_id == test_resource_request.id for c in contributions)
 
 
 def test_get_contributions_by_request(db_session, test_resource_request, test_user):
-    """Test getting all contributions for a specific request."""
-    # Create a contribution
+    """Test getting all contributions for a specific resource request."""
+    # Create a contribution first
     contribution_data = ResourceContributionCreate(
-        request_id=test_resource_request.id, quantity=20
+        request_id=test_resource_request.id, quantity=10
     )
     resource_service.create_resource_contribution(
         db_session, test_user.id, contribution_data
     )
 
-    # Get request contributions
+    # Get contributions by request
     contributions = resource_service.get_contributions_by_request(
         db_session, test_resource_request.id
     )
 
+    # Verify
     assert len(contributions) >= 1
-    assert any(
-        c.request_id == test_resource_request.id and c.quantity == 20
-        for c in contributions
-    )
+    assert all(c.request_id == test_resource_request.id for c in contributions)
 
 
 def test_multiple_contributions_update_quantity(

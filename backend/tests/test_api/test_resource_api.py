@@ -20,7 +20,6 @@ def test_resource_request(db_session, test_event):
         resource_type=ResourceTypeEnum.FOOD.value,
         quantity_needed=50,
         quantity_received=0,
-        # Removed description field as it doesn't exist in the model
     )
     db_session.add(request)
     db_session.commit()

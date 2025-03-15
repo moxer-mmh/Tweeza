@@ -1,11 +1,12 @@
 from sqlalchemy.orm import Session
 from typing import Optional
 from app.db.models import User
-from app.core.security import verify_password, create_access_token
+from app.core.security import verify_password, create_access_token, decode_token
 from app.schemas import Token, UserLogin, UserRoleEnum
 from datetime import timedelta
 from app.core.config import settings
 from app.services import user_service, organization_service
+from jose import JWTError
 
 
 def authenticate_user(db: Session, auth_data: UserLogin) -> Optional[User]:
@@ -107,3 +108,19 @@ def can_manage_user(user: User, target_user_id: int, db: Session) -> bool:
 
     # Regular users can only manage themselves
     return False
+
+
+def get_user_id_from_token(token: str) -> Optional[int]:
+    """
+    Extract and return the user ID from a token.
+    Returns None if the token is invalid.
+    """
+    try:
+        payload = decode_token(token)
+        if payload is None:
+            return None
+
+        user_id = int(payload.get("sub"))
+        return user_id
+    except (JWTError, ValueError):
+        return None

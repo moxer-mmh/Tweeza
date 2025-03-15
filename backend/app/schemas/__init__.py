@@ -43,6 +43,14 @@ from .resource import (
     ResourceContributionResponse,
 )
 from .token import Token, TokenData
+from .oauth import OAuthProvider, OAuthRequest, OAuthUserInfo
+from .two_factor import TwoFactorSetup, TwoFactorVerify
+from .notification import (
+    NotificationType,
+    NotificationBase,
+    NotificationCreate,
+    NotificationResponse,
+)
 
 __all__ = [
     "UserRoleEnum",
@@ -83,4 +91,13 @@ __all__ = [
     "ResourceContributionResponse",
     "Token",
     "TokenData",
+    "OAuthProvider",
+    "OAuthRequest",
+    "OAuthUserInfo",
+    "TwoFactorSetup",
+    "TwoFactorVerify",
+    "NotificationType",
+    "NotificationBase",
+    "NotificationCreate",
+    "NotificationResponse",
 ]

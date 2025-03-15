@@ -40,6 +40,28 @@ class Settings(BaseSettings):
     # Database initialization
     INITIALIZE_DB: bool = True
 
+    # OAuth settings
+    GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID", "")
+    GOOGLE_CLIENT_SECRET: str = os.getenv("GOOGLE_CLIENT_SECRET", "")
+    FACEBOOK_CLIENT_ID: str = os.getenv("FACEBOOK_CLIENT_ID", "")
+    FACEBOOK_CLIENT_SECRET: str = os.getenv("FACEBOOK_CLIENT_SECRET", "")
+    GITHUB_CLIENT_ID: str = os.getenv("GITHUB_CLIENT_ID", "")
+    GITHUB_CLIENT_SECRET: str = os.getenv("GITHUB_CLIENT_SECRET", "")
+    TWITTER_CLIENT_ID: str = os.getenv("TWITTER_CLIENT_ID", "")
+    TWITTER_CLIENT_SECRET: str = os.getenv("TWITTER_CLIENT_SECRET", "")
+
+    # Email settings
+    EMAIL_HOST: str = os.getenv("EMAIL_HOST", "")
+    EMAIL_PORT: int = int(os.getenv("EMAIL_PORT", "587"))
+    EMAIL_USER: str = os.getenv("EMAIL_USER", "")
+    EMAIL_PASSWORD: str = os.getenv("EMAIL_PASSWORD", "")
+    EMAIL_FROM: str = os.getenv("EMAIL_FROM", "no-reply@tweeza.com")
+    EMAIL_USE_TLS: bool = os.getenv("EMAIL_USE_TLS", "True").lower() in (
+        "true",
+        "1",
+        "t",
+    )
+
     class Config:
         case_sensitive = True
         env_file = ".env"

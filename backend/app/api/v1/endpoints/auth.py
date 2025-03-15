@@ -8,8 +8,10 @@ from app.schemas import (
     UserResponse,
     UserRoleEnum,
     OrganizationCreate,
+    OAuthRequest,
+    OAuthProvider,
 )
-from app.services import auth_service, user_service, organization_service
+from app.services import auth_service, user_service, organization_service, oauth_service
 from app.db import get_db
 
 router = APIRouter()
@@ -96,3 +98,31 @@ def register_organization(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
+
+
+@router.post("/oauth/login", response_model=Token)
+def oauth_login(*, oauth_data: OAuthRequest, db: Session = Depends(get_db)):
+    """
+    Login or register via OAuth provider.
+    """
+    # Get user info from OAuth provider
+    user_info = oauth_service.get_oauth_user_info(
+        oauth_data.provider, oauth_data.access_token
+    )
+    if not user_info:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid OAuth credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # Authenticate or create user
+    user = oauth_service.authenticate_oauth(db, user_info)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to authenticate via OAuth",
+        )
+
+    # Create access token
+    return auth_service.create_user_token(user.id)
