@@ -45,6 +45,10 @@ The platform is tailored to Algeria's unique context, with localization for Arab
 
 ## Architecture
 
+### Technical Documentation
+
+Check : [Technical Documentation](https://github.com/moxer-mmh/Tweeza/blob/main/backend/docs/DOCUMENTATION.md)
+
 ### Backend Architecture
 
 The backend is built with FastAPI and SQLAlchemy, following a layered architecture:
