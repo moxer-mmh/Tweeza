@@ -1,103 +1,275 @@
-import Image from "next/image";
+"use client";
+import React from "react";
+import { useState } from "react";
+import EmergencyCard from "@/components/EmergencyCard";
+import AssistanceCard from "@/components/AssistanceCard";
+import EventCard from "@/components/EventCard";
+import Link from "next/link";
+import Map from "@/components/Map";
 
-export default function Home() {
+const Page = () => {
+  const [activeTab, setActiveTab] = useState("Emergency");
+
+  const mockData = {
+    Emergency: [
+      {
+        id: 1,
+        title: "Food Bank",
+        description: "Local food distribution center needs supplies",
+        location: "Downtown",
+        urgency: "High",
+        quantity: { current: 30, needed: 100 },
+        deadline: "2024-02-01",
+        coordinates: { lat: 40.7128, lng: -74.006 },
+      },
+      {
+        id: 2,
+        title: "Community Garden",
+        description: "Seeds and tools needed for spring planting",
+        location: "Westside",
+        urgency: "Medium",
+        quantity: { current: 45, needed: 80 },
+        deadline: "2024-02-15",
+        coordinates: { lat: 40.7228, lng: -73.996 },
+      },
+      {
+        id: 3,
+        title: "Tool Library",
+        description: "Construction tools needed for rebuilding",
+        location: "Eastside",
+        urgency: "High",
+        quantity: { current: 15, needed: 50 },
+        deadline: "2024-01-30",
+        coordinates: { lat: 40.7328, lng: -73.986 },
+      },
+    ],
+    assistance: [
+      {
+        id: 1,
+        title: "Legal Aid",
+        description: "Free legal consultation",
+        location: "City Center",
+        coordinates: { lat: 40.7528, lng: -74.026 },
+      },
+      {
+        id: 2,
+        title: "Housing Assistance",
+        description: "Help finding affordable housing",
+        location: "Northside",
+        coordinates: { lat: 40.7628, lng: -74.036 },
+      },
+      {
+        id: 3,
+        title: "Financial Counseling",
+        description: "Budget and debt advice",
+        location: "Southside",
+        coordinates: { lat: 40.7028, lng: -73.986 },
+      },
+    ],
+    events: [
+      {
+        id: 1,
+        title: "Community Cleanup",
+        description: "Volunteer event to clean local park",
+        location: "Central Park",
+        coordinates: { lat: 40.7828, lng: -73.966 },
+      },
+      {
+        id: 2,
+        title: "Farmers Market",
+        description: "Weekly local produce market",
+        location: "Market Square",
+        coordinates: { lat: 40.7428, lng: -73.976 },
+      },
+      {
+        id: 3,
+        title: "Workshop Series",
+        description: "DIY repair workshops",
+        location: "Community Center",
+        coordinates: { lat: 40.7328, lng: -74.046 },
+      },
+    ],
+  };
+
+  // Get data based on active tab
+  const activeData = mockData[activeTab] || [];
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.js
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+    <div className=" pb-8">
+      <div className="relative">
+        <div className="absolute left-1/2 -translate-x-1/2 top-4 z-10 flex items-center gap-2 w-3/4 md:w-1/4 max-w-4xl ">
+          <div className="relative flex-1">
+            <input
+              type="text"
+              placeholder="Search locations..."
+              className="w-full pl-10 pr-4 py-1 text-black rounded-lg focus:outline-none focus:border-red-700 bg-white "
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            <svg
+              className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.3-4.3" />
+            </svg>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        <div className="absolute right-4 top-2 z-10">
+          <Link href="/profile">
+            <button className="p-2 h-10 w-10 bg-white border-2 shadow-md border-[#E8E8E8] rounded-full hover:shadow-lg transition-shadow">
+              <svg
+                className=" text-gray-600"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            </button>
+          </Link>
+        </div>
+        <div className="bg-gray-100 z-0 rounded-lg h-[400px] relative">
+          <Map items={activeData} activeTab={activeTab} />
+        </div>
+      </div>
+
+      {/* Filter Tabs */}
+      <div>
+        <div className="mb-6   px-4">
+          <div className="flex  justify-center items-center border-b border-gray-300">
+            <button
+              onClick={() => setActiveTab("Emergency")}
+              className={`py-2 px-4 font-medium  ${
+                activeTab === "Emergency"
+                  ? "text-[#973535] border-b-2 border-[#973535]"
+                  : "text-gray-500"
+              }`}
+            >
+              Emergency
+            </button>
+            <button
+              onClick={() => setActiveTab("assistance")}
+              className={`py-2 px-4 font-medium ${
+                activeTab === "assistance"
+                  ? "text-blue-600 border-b-2 border-blue-600"
+                  : "text-gray-500"
+              }`}
+            >
+              Assistance
+            </button>
+            <button
+              onClick={() => setActiveTab("events")}
+              className={`py-2 px-4 font-medium ${
+                activeTab === "events"
+                  ? "text-emerald-600 border-b-2 border-emerald-600"
+                  : "text-gray-500"
+              }`}
+            >
+              Events
+            </button>
+          </div>
+        </div>
+
+        {/* Results List */}
+        <div className="grid px-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {activeTab === "Emergency"
+            ? activeData.map((item) => (
+                <EmergencyCard
+                  key={item.id}
+                  id={item.id}
+                  title={item.title}
+                  description={item.description}
+                  location={item.location}
+                  urgency={item.urgency}
+                  quantity={item.quantity}
+                  deadline={item.deadline}
+                />
+              ))
+            : activeTab === "assistance"
+            ? activeData.map((item) => (
+                <AssistanceCard
+                  key={item.id}
+                  title={item.title}
+                  description={item.description}
+                  location={item.location}
+                  coordinates={item.coordinates}
+                />
+              ))
+            : activeData.map((item) => (
+                <EventCard
+                  key={item.id}
+                  title={item.title}
+                  description={item.description}
+                  location={item.location}
+                  date={new Date().toISOString()}
+                  attendees={{ current: 15 }}
+                />
+              ))}
+        </div>
+
+        {/* Empty State */}
+        {activeData.length === 0 && (
+          <div className="text-center py-8">
+            <p className="text-gray-500">No {activeTab} found</p>
+          </div>
+        )}
+      </div>
     </div>
   );
-}
+};
+
+export default Page;
+
+<div className="pb-8">
+  <div className="sticky top-0 z-50">
+    <div className="absolute left-1/2 -translate-x-1/2 top-4 z-10 flex items-center gap-2 w-3/4 md:w-1/4 max-w-4xl ">
+      <div className="relative flex-1">
+        <input
+          type="text"
+          placeholder="Search locations..."
+          className="w-full pl-10 pr-4 py-1 text-black rounded-lg focus:outline-none focus:border-red-700 bg-transparent"
+        />
+        <svg
+          className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.3-4.3" />
+        </svg>
+      </div>
+    </div>
+    <div className="absolute right-4 top-2 z-10">
+      <button className="p-2 h-10 w-10 border-2 shadow-md border-[#E8E8E8] rounded-full hover:shadow-lg transition-shadow bg-transparent">
+        <svg
+          className="text-gray-600"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+          <circle cx="12" cy="7" r="4" />
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>;
