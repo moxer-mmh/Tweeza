@@ -10,6 +10,8 @@ from .models import (
     ResourceContribution,
     ResourceRequest,
     EventBeneficiary,
+    OAuthConnection,
+    Notification,
 )
 
 
@@ -25,5 +27,7 @@ __all__ = [
     "ResourceContribution",
     "ResourceRequest",
     "EventBeneficiary",
+    "OAuthConnection",
+    "Notification",
     Base,
 ]

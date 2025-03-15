@@ -1,8 +1,8 @@
 """init db
 
-Revision ID: 9ecc2b699bd7
+Revision ID: 41e8ad14cd7d
 Revises: 
-Create Date: 2025-03-14 12:16:29.767948
+Create Date: 2025-03-15 15:45:02.043107
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '9ecc2b699bd7'
+revision: str = '41e8ad14cd7d'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -40,6 +40,8 @@ def upgrade() -> None:
     sa.Column('location', sa.String(length=128), nullable=True),
     sa.Column('latitude', sa.Float(), nullable=True),
     sa.Column('longitude', sa.Float(), nullable=True),
+    sa.Column('two_factor_secret', sa.String(), nullable=True),
+    sa.Column('two_factor_enabled', sa.Boolean(), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email'),
     sa.UniqueConstraint('phone')
@@ -51,9 +53,39 @@ def upgrade() -> None:
     sa.Column('start_time', sa.DateTime(), nullable=True),
     sa.Column('end_time', sa.DateTime(), nullable=True),
     sa.Column('organization_id', sa.Integer(), nullable=True),
+    sa.Column('latitude', sa.Float(), nullable=True),
+    sa.Column('longitude', sa.Float(), nullable=True),
+    sa.Column('address', sa.String(length=255), nullable=True),
     sa.ForeignKeyConstraint(['organization_id'], ['organizations.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('notifications',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('title', sa.String(), nullable=False),
+    sa.Column('message', sa.String(), nullable=False),
+    sa.Column('notification_type', sa.String(), nullable=True),
+    sa.Column('related_id', sa.Integer(), nullable=True),
+    sa.Column('related_type', sa.String(), nullable=True),
+    sa.Column('read', sa.Boolean(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('read_at', sa.DateTime(), nullable=True),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_notifications_id'), 'notifications', ['id'], unique=False)
+    op.create_table('oauth_connections',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('provider', sa.String(), nullable=False),
+    sa.Column('provider_user_id', sa.String(), nullable=False),
+    sa.Column('access_token', sa.String(), nullable=True),
+    sa.Column('refresh_token', sa.String(), nullable=True),
+    sa.Column('expires_at', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_oauth_connections_id'), 'oauth_connections', ['id'], unique=False)
     op.create_table('organization_members',
     sa.Column('organization_id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
@@ -114,6 +146,10 @@ def downgrade() -> None:
     op.drop_table('event_beneficiaries')
     op.drop_table('user_roles')
     op.drop_table('organization_members')
+    op.drop_index(op.f('ix_oauth_connections_id'), table_name='oauth_connections')
+    op.drop_table('oauth_connections')
+    op.drop_index(op.f('ix_notifications_id'), table_name='notifications')
+    op.drop_table('notifications')
     op.drop_table('events')
     op.drop_table('users')
     op.drop_table('organizations')

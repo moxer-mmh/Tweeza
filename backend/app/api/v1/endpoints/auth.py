@@ -83,7 +83,7 @@ def register_organization(
     *,
     user_data: UserCreate,
     organization_data: OrganizationCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Register as an organization owner (admin).
@@ -113,28 +113,91 @@ def register_organization(
 def oauth_login(*, oauth_data: OAuthRequest, db: Session = Depends(get_db)):
     """
     Login or register via OAuth provider.
+
+    Accepts either:
+    - A Google/Facebook access token from an OAuth flow
+    - A Google ID token (JWT) from Google Sign-In
+    - A valid application token for re-authentication
     """
-    # Get user info from OAuth provider
-    user_info = oauth_service.get_oauth_user_info(
-        oauth_data.provider, oauth_data.access_token
-    )
-    if not user_info:
+    try:
+        # Log the OAuth login attempt
+        print(f"Manual OAuth login attempt with provider: {oauth_data.provider}")
+
+        # Validate the token format
+        if not oauth_data.access_token or len(oauth_data.access_token) < 10:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid access token format",
+            )
+
+        # Log token info (safely)
+        print(f"Token starts with: {oauth_data.access_token[:10]}...")
+        print(f"Token length: {len(oauth_data.access_token)}")
+
+        # Check if this is likely a JWT format token
+        is_jwt = oauth_data.access_token.count(".") == 2
+        if is_jwt:
+            print("Detected JWT format token")
+
+            # Check if it might be our own application token
+            try:
+                from app.core.security import decode_token
+
+                payload = decode_token(oauth_data.access_token)
+                if payload and "sub" in payload:
+                    print(
+                        f"Token appears to be a valid application token for user ID: {payload['sub']}"
+                    )
+                    # If it's a valid application token, we can just return a new token
+                    user_id = int(payload["sub"])
+                    return auth_service.create_user_token(user_id)
+            except Exception as e:
+                print(f"Error checking if token is an application token: {str(e)}")
+                # Continue with normal OAuth flow if it's not our token
+
+        # Get user info from OAuth provider
+        user_info = oauth_service.get_oauth_user_info(
+            oauth_data.provider, oauth_data.access_token
+        )
+
+        if not user_info:
+            # If the token appears to be a JWT token but we failed to process it
+            if is_jwt:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid token format. Could not extract user information.",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid OAuth credentials. Could not retrieve user information.",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+
+        # Log successful user info retrieval
+        print(f"Successfully retrieved user info for: {user_info.email}")
+
+        # Authenticate or create user
+        user = oauth_service.authenticate_oauth(db, user_info)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to authenticate via OAuth",
+            )
+
+        # Create access token
+        return auth_service.create_user_token(user.id)
+    except HTTPException as he:
+        # Re-raise HTTP exceptions as-is
+        raise he
+    except Exception as e:
+        print(f"Error in OAuth login: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid OAuth credentials",
+            detail=f"OAuth authentication failed: {str(e)}",
             headers={"WWW-Authenticate": "Bearer"},
         )
-
-    # Authenticate or create user
-    user = oauth_service.authenticate_oauth(db, user_info)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to authenticate via OAuth",
-        )
-
-    # Create access token
-    return auth_service.create_user_token(user.id)
 
 
 # OAuth routes
@@ -143,7 +206,7 @@ def google_login():
     """
     Generate Google OAuth login URL.
     """
-    redirect_uri = "http://localhost:3000/auth/google/callback"  # Use your actual frontend callback URL
+    redirect_uri = "http://127.0.0.1:8000/api/v1/auth/google/callback"  # Match the URI configured in Google Console
     url = oauth_service.get_google_auth_url(redirect_uri)
     return {"url": url}
 
@@ -153,13 +216,45 @@ def google_callback(code: str, db: Session = Depends(get_db)):
     """
     Handle Google OAuth callback.
     """
-    user, is_new = oauth_service.handle_google_callback(db, code)
-    if not user:
+    try:
+        redirect_uri = "http://127.0.0.1:8000/api/v1/auth/google/callback"
+
+        # Validate the code format - basic checks
+        if not code or len(code) < 10:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid authorization code format",
+            )
+
+        # Check if the code appears to be a JWT token (which won't work)
+        if code.count(".") == 2 and len(code) < 200:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid authorization code format (looks like a JWT token)",
+            )
+
+        user, is_new = oauth_service.handle_google_callback(db, code, redirect_uri)
+
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Failed to authenticate with Google",
+            )
+
+        return auth_service.create_user_token(user.id)
+    except ValueError as e:
+        # Provide more detailed error information
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Failed to authenticate with Google",
+            detail=f"Google authentication error: {str(e)}",
         )
-    return auth_service.create_user_token(user.id)
+    except Exception as e:
+        # Log unexpected errors
+        print(f"Unexpected error in Google callback: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred during authentication",
+        )
 
 
 @router.get("/facebook/login")

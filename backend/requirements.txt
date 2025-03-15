@@ -47,3 +47,4 @@ pyotp>=2.7.0
 qrcode>=7.3.1
 pillow>=9.0.0
 pyjwt>=2.3.0
+google-auth
