@@ -1,371 +1,158 @@
-# Tweeza Backend Documentation
+# Tweeza Backend
+
+Tweeza is a backend solution designed for the Djezzy Code Fest hackathon. It provides a robust API for managing users, organizations, events, resources, and notifications while ensuring security, scalability, and performance in an Algerian context.
 
 ## Table of Contents
 
-1. System Overview
-2. Architecture
-3. API Documentation
-4. Database Schema
-5. Authentication & Authorization
-6. Setup & Deployment
-7. Testing
-8. Security Considerations
+- [Tweeza Backend](#tweeza-backend)
+  - [Table of Contents](#table-of-contents)
+  - [Overview](#overview)
+  - [Features](#features)
+  - [Architecture](#architecture)
+  - [Installation](#installation)
+  - [Configuration](#configuration)
+  - [Running the Application](#running-the-application)
+  - [API Documentation](#api-documentation)
+  - [Testing](#testing)
+  - [DevOps \& Deployment](#devops--deployment)
+  - [Security Considerations](#security-considerations)
+  - [Contributing](#contributing)
+  - [License](#license)
 
-## System Overview
+## Overview
 
-Tweeza is a platform that facilitates resource sharing, event management, and organizational collaboration. The backend is built with FastAPI, providing a high-performance, easy-to-use REST API with automatic interactive documentation.
+Tweeza is built using FastAPI and SQLAlchemy with an SQLite database for development. The backend implements a layered architecture that separates the API, service, and data access layers to ensure maintainability and scalability. Key functionality includes user authentication (JWT and OAuth), organization and event management, and resource tracking.
 
-**Core Features:**
-- User management with role-based access control
-- Organization management
-- Event coordination and collaboration
-- Resource sharing and tracking
-- Secure authentication and authorization
+## Features
+
+- **User Authentication:** Supports JWT, two-factor authentication, and OAuth (Google, Facebook, etc.).
+- **Role-Based Access Control:** Fine-grained permissions for users, organization admins, and super admins.
+- **Organization & Event Management:** Create, update, and delete organizations and events, with member and collaborator management.
+- **Resource Tracking:** Manage resource requests and contributions linked to events.
+- **Notifications:** In-app notifications with email/SMS support.
+- **Performance:** Pagination, caching opportunities, and optimized SQL queries.
 
 ## Architecture
 
-### System Design
+The backend follows a layered architecture:
 
-```
-┌─────────────────┐      ┌────────────────┐      ┌─────────────────┐
-│   Client Apps   │◄────►│ FastAPI Backend │◄────►│ SQLite Database │
-└─────────────────┘      └────────────────┘      └─────────────────┘
-                               │
-                               │
-            ┌─────────────────────────────────────┐
-            │                                     │
-┌───────────▼────────────┐   ┌───────────────────▼┐
-│  Authentication &      │   │ Business Logic &   │
-│  Authorization         │   │ Data Services      │
-└────────────────────────┘   └────────────────────┘
+- **Client Layer:** Web, mobile, and admin clients interact with the API.
+- **API Layer:** FastAPI application with middleware for authentication, CORS, and error handling.
+- **Service Layer:** Contains core business logic (AuthService, UserService, etc.).
+- **Data Access Layer:** Utilizes SQLAlchemy models and a session manager.
+- **Database Layer:** SQLite for development; configurable for production.
+
+Refer to the [Technical Documentation](./docs/DOCUMENTATION.md) for detailed architectural diagrams and flows.
+
+## Installation
+
+1. **Clone the Repository:**
+
+   ```bash
+   git clone https://github.com/moxer-mmh/Tweeza.git
+   cd backend
+   ```
+2. **Create a Virtual Environment:**
+
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+3. **Install Dependencies:**
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+## Configuration
+
+Copy the sample environment file and update the configuration variables:
+
+```bash
+cp .env.example .env
 ```
 
-### Component Structure
+Key environment variables include:
 
+- `SECRET_KEY`
+- `ALGORITHM`
+- `APP_ENV`
+- `ACCESS_TOKEN_EXPIRE_MINUTES`
+- OAuth credentials (Google, Facebook, etc.)
+- Email and SMS service configurations
+
+## Running the Application
+
+Start the FastAPI server using Uvicorn:
+
+```bash
+uvicorn main:app --reload
 ```
-backend/
-├── app/                      # Main application package
-│   ├── api/                  # API endpoints and routers
-│   │   └── v1/               # API version 1
-│   │       └── endpoints/    # API endpoint modules
-│   │           ├── auth.py   # Authentication endpoints
-│   │           ├── users.py  # User management
-│   │           ├── organizations.py
-│   │           ├── events.py
-│   │           └── resources.py
-│   ├── core/                 # Core application modules
-│   │   ├── config.py         # Configuration settings
-│   │   └── security.py       # Security utilities
-│   ├── db/                   # Database related code
-│   │   ├── base.py           # SQLAlchemy base
-│   │   ├── models/           # Database models
-│   │   └── session.py        # Database connection
-│   ├── schemas/              # Pydantic schemas for validation
-│   └── services/             # Business logic services
-├── migrations/               # Alembic database migrations
-├── tests/                    # Test suite
-└── scripts/                  # Utility scripts
-```
+
+The API will be available at `http://localhost:8000`. Swagger documentation is accessible at `/docs` and ReDoc at `/redoc`.
 
 ## API Documentation
 
-The API is organized into the following modules:
+The API endpoints are categorized by functionality. For example:
 
-### Authentication
+- **Authentication:** `/api/v1/auth/login`, `/api/v1/auth/register`, etc.
+- **User Management:** `/api/v1/users/me`, `/api/v1/users/{user_id}`, etc.
+- **Organization & Event Management:** `/api/v1/organizations/`, `/api/v1/events/`, etc.
+- **Resource & Notification Endpoints:** `/api/v1/resources/requests`, `/api/v1/notifications/`, etc.
 
-- `POST /api/v1/auth/login` - User login with email/password
-- `POST /api/v1/auth/register` - Register a new user
-- `POST /api/v1/auth/register-organization` - Register a new organization with admin user
-
-### Users
-
-- `GET /api/v1/users/` - List users (admin only)
-- `GET /api/v1/users/{user_id}` - Get user details
-- `PUT /api/v1/users/{user_id}` - Update user information
-- `DELETE /api/v1/users/{user_id}` - Delete user
-- `POST /api/v1/users/roles` - Add role to user
-- `DELETE /api/v1/users/{user_id}/roles/{role_id}` - Remove role from user
-
-### Organizations
-
-- `GET /api/v1/organizations/` - List organizations
-- `POST /api/v1/organizations/` - Create organization
-- `GET /api/v1/organizations/{organization_id}` - Get organization details
-- `PUT /api/v1/organizations/{organization_id}` - Update organization
-- `DELETE /api/v1/organizations/{organization_id}` - Delete organization
-
-### Events
-
-- `GET /api/v1/events/` - List events
-- `POST /api/v1/events/` - Create event
-- `GET /api/v1/events/{event_id}` - Get event details
-- `PUT /api/v1/events/{event_id}` - Update event
-- `DELETE /api/v1/events/{event_id}` - Delete event
-- `POST /api/v1/events/{event_id}/collaborators` - Add collaborator to event
-
-### Resources
-
-- `GET /api/v1/resources/` - List resources
-- `POST /api/v1/resources/` - Create resource
-- `GET /api/v1/resources/{resource_id}` - Get resource details
-- `PUT /api/v1/resources/{resource_id}` - Update resource
-- `DELETE /api/v1/resources/{resource_id}` - Delete resource
-
-## Database Schema
-
-### Core Entities
-
-1. **User**
-   - Primary entity for authentication and access control
-   - Stores personal information, credentials, and location data
-   - Connected to roles through UserRole junction table
-
-2. **Organization**
-   - Represents a group or entity that can host events and manage resources
-   - Has members (users) with different roles
-
-3. **Event**
-   - Coordinated activities with time, location, and description
-   - Can have multiple collaborators (users)
-   - Associated with the organizing organization
-
-4. **Resource**
-   - Items or services that can be shared or tracked
-   - Associated with organizations or events
-   - Includes metadata like availability, description, and quantity
-
-### Relationships
-
-- **User-Organization**: Many-to-many through organization memberships with roles
-- **User-Event**: Many-to-many through event collaborators
-- **Organization-Event**: One-to-many (an organization can host many events)
-- **Organization-Resource**: One-to-many (organization owns/manages resources)
-- **Event-Resource**: Many-to-many (resources can be used in multiple events)
-
-## Authentication & Authorization
-
-### Authentication Flow
-
-1. User provides credentials (email/password)
-2. System validates credentials against database
-3. If valid, JWT token is generated and returned
-4. Token includes user ID and expiration
-5. Client includes token in Authorization header for subsequent requests
-
-### Role-Based Access Control
-
-The system implements a comprehensive role-based access control system:
-
-- **Super Admin**: Has complete access to all system features
-- **Admin**: Can manage users, resources, and events within their organization
-- **User**: Basic access to view and participate in events and use resources
-
-Super Admin creation is handled through a dedicated script detailed in super_admin_guide.md.
-
-### Security Implementation
-
-- Password hashing using modern algorithms
-- JWT tokens with configurable expiration
-- CORS protection for API endpoints
-- Input validation using Pydantic schemas
-
-## Setup & Deployment
-
-### Prerequisites
-
-- Python 3.8+
-- SQLite (default) or other database supported by SQLAlchemy
-- Environment configured according to settings in `app/core/config.py`
-
-### Installation Steps
-
-1. Clone the repository
-2. Install dependencies:
-   ```
-   pip install -r requirements.txt
-   ```
-3. Set up the database:
-   ```
-   alembic upgrade head
-   ```
-4. Run the application:
-   ```
-   uvicorn app.main:app --reload
-   ```
-
-### Environment Variables
-
-The application uses the following environment variables:
-
-- `SECRET_KEY`: Secret key for JWT token encryption
-- `INITIALIZE_DB`: Boolean to automatically initialize database tables
-- `ORIGINS`: List of allowed CORS origins (comma separated)
-- `API_STR`: API prefix (default: "/api")
-- `PROJECT_NAME`: Name of the project (default: "Tweeza")
-
-### Docker Deployment
-
-A Dockerfile is provided for containerized deployment:
-
-```
-docker build -t tweeza-backend .
-docker run -p 8000:8000 tweeza-backend
-```
-or
-```
-docker-compose up
-```
+Detailed API specifications and examples are available in the [Technical Documentation](./DOCUMENTATION.md).
 
 ## Testing
 
-### Test Strategy
+Tests are organized into API, services, and models directories.
 
-The application uses pytest for testing:
+Run all tests with coverage:
 
-- Unit tests for services and utilities
-- Integration tests for API endpoints
-- Coverage reports to identify untested code paths
-
-### Running Tests
-
-To run the test suite:
-
-```
+```bash
 python run_tests.py
 ```
 
-To generate a coverage report:
+For an HTML coverage report:
 
-```
-python run_tests.py --coverage
+```bash
+python run_tests.py --html
 ```
 
-To run only failing tests:
+To run a specific test module:
 
+```bash
+python run_tests.py --path tests/test_api/test_auth.py
 ```
-python run_failing_tests.py
-```
+
+## DevOps & Deployment
+
+The backend supports both development and production environments. Refer to the `DevOps Setup` section in the documentation for:
+
+- Environment configuration flow
+- Database initialization
+- CORS setup
+- Deployment guidelines
 
 ## Security Considerations
 
-- All passwords are hashed and never stored in plain text
-- JWT tokens have short expiration time to minimize risk of stolen tokens
-- Input validation prevents SQL injection and similar attacks
-- Role-based permissions prevent unauthorized access to sensitive operations
-- CORS settings restrict which domains can access the API
+- **Data Protection:** Secure password hashing, input validation, and proper CORS configurations.
+- **Authentication Security:** Robust JWT token management and two-factor authentication.
+- **API Protection:** Rate limiting and thorough error handling to prevent information leaks.
+- **Infrastructure:** Secure database connections and HTTPS enforcement in production.
+
+## Contributing
+
+Contributions are welcome! Please fork the repository and submit pull requests for any improvements or bug fixes.
+
+1. Fork the repository.
+2. Create a feature branch: `git checkout -b feature/YourFeature`.
+3. Commit your changes.
+4. Push to the branch and open a pull request.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
 
 ---
 
-# Super Admin Role
-
-The Super Admin has complete access to all system functionality and can:
-
-- View and modify all users, organizations, events, and resources
-- Create and manage roles for any user
-- Delete any entity in the system
-
-For security reasons, Super Admin creation is restricted to the command line using a dedicated script. See super_admin_guide.md for detailed instructions on creating a Super Admin user.
-
----
-
-# System Design Documentation
-
-## High-Level Architecture
-
-Tweeza follows a layered architecture pattern:
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                      API Layer (FastAPI)                        │
-└───────────────────────────────────┬─────────────────────────────┘
-                                    │
-┌───────────────────────────────────▼─────────────────────────────┐
-│                     Service Layer (Business Logic)              │
-└───────────────────────────────────┬─────────────────────────────┘
-                                    │
-┌───────────────────────────────────▼─────────────────────────────┐
-│                     Data Access Layer (SQLAlchemy)              │
-└───────────────────────────────────┬─────────────────────────────┘
-                                    │
-┌───────────────────────────────────▼─────────────────────────────┐
-│                         Database (SQLite)                       │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-## Database Design
-
-### Entity-Relationship Diagram
-
-```
-┌────────────┐     ┌───────────┐     ┌─────────────┐
-│   User     │     │  UserRole │     │    Role     │
-├────────────┤     ├───────────┤     ├─────────────┤
-│ id         │─┐ ┌─│ user_id   │   ┌─│ id          │
-│ email      │ │ │ │ role_id   │───┘ │ name        │
-│ password   │ └─┤ └───────────┘     │ description │
-│ first_name │   │                   └─────────────┘
-│ last_name  │   │
-│ latitude   │   │   ┌────────────────────┐
-│ longitude  │   │   │   Organization     │
-└────────────┘   │   ├────────────────────┤
-                 └───┤ id                 │
-                     │ name               │
-┌────────────┐       │ description        │
-│   Event    │       │ location           │
-├────────────┤       └────────────────────┘
-│ id         │               │
-│ title      │               │
-│ start_date │               │
-│ end_date   │               │
-│ org_id     │───────────────┘
-└────────────┘
-      │
-      │
-┌─────▼──────┐
-│  Resource  │
-├────────────┤
-│ id         │
-│ name       │
-│ type       │
-│ quantity   │
-│ event_id   │
-└────────────┘
-```
-
-## Request Flow
-
-1. Client makes HTTP request to API endpoint
-2. FastAPI routes request to appropriate endpoint handler
-3. Endpoint handler validates input using Pydantic schemas
-4. Authentication middleware verifies JWT token and user permissions
-5. Service layer processes business logic using validated data
-6. Data access layer interacts with database
-7. Response is formatted and returned to client
-
-## Scalability Considerations
-
-- Database connection pooling for efficient resource utilization
-- Stateless API design allows horizontal scaling
-- Pagination implemented for list endpoints to handle large datasets
-- Efficient SQL queries optimized for performance
-- Caching strategies can be implemented for frequent queries
-
-## Future Expansion
-
-The modular architecture allows for easy expansion in the following areas:
-
-1. **Additional Authentication Methods**
-   - OAuth integration for social logins
-   - Two-factor authentication
-
-2. **Advanced Search**
-   - Full-text search for resources
-   - Geospatial queries for location-based features
-
-3. **Analytics**
-   - Usage statistics
-   - Resource utilization reporting
-
-4. **Notification System**
-   - Email notifications
-   - Push notifications for mobile clients
+*This README is part of a hackathon project, designed to address the criteria for innovation, technical execution, and user experience in the Algerian context. For further details, refer to the comprehensive documentation provided in the repository.*
