@@ -1,6 +1,6 @@
 from typing import Optional, Dict, Any
 from sqlalchemy.orm import Session
-from app.db.models import User, OAuthConnection, OAuthAccount
+from app.db.models import User, OAuthConnection
 from app.schemas import OAuthUserInfo, OAuthProvider, UserCreate
 from app.services import user_service, auth_service
 from app.core.config import settings
@@ -302,12 +302,12 @@ def create_or_update_user_from_oauth(
             else user_info.get("picture")
         )
 
+        # Create user without created_at field
         user = User(
             email=email,
             full_name=name,
-            profile_image=picture_url,
-            is_active=True,
-            created_at=datetime.now(),
+            password_hash="oauth_user",  # Set a placeholder password
+            phone="oauth_user",  # Set a placeholder phone
         )
         db.add(user)
         db.commit()
@@ -319,13 +319,12 @@ def create_or_update_user_from_oauth(
     if hasattr(user, provider_field):
         setattr(user, provider_field, provider_id)
 
-    # Create an OAuth account record
+    # Create an OAuth connection record
     oauth_connection = OAuthConnection(
         user_id=user.id,
         provider=provider.value,
         provider_user_id=provider_id,
         access_token="",  # In a real app, you'd store the access token
-        token_type="Bearer",
         expires_at=None,  # In a real app, you'd calculate expiry
     )
     db.add(oauth_connection)

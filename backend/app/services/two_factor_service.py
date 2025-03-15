@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from app.db.models import User, TwoFactorAuth
+from app.db.models import User
 import pyotp
 import qrcode
 import io
@@ -97,6 +97,14 @@ def disable_2fa(db: Session, user_id: int) -> bool:
     user.two_factor_secret = None
     db.commit()
     return True
+
+
+# Add an alias for the disable_2fa function to maintain compatibility
+def disable_two_factor(db: Session, user_id: int) -> bool:
+    """
+    Alias for disable_2fa to maintain backward compatibility.
+    """
+    return disable_2fa(db, user_id)
 
 
 def verify_2fa_code(db: Session, user_id: int, code: str) -> bool:

@@ -12,11 +12,12 @@ def test_events_data(db_session, test_organization, test_user):
     for i in range(3):
         event = Event(
             title=f"Test Event {i}",
-            # Remove 'description' argument if it's not in the model
+            event_type="IFTAR",
             organization_id=test_organization.id,
-            start_date=datetime.now() - timedelta(days=i * 10),
-            end_date=datetime.now() + timedelta(days=i * 5),
-            location="Test Location",
+            start_time=datetime.now() - timedelta(days=i * 10),
+            end_time=datetime.now() + timedelta(days=i * 5),
+            # Use address instead of location
+            address="Test Location",
             status="active",
         )
         db_session.add(event)

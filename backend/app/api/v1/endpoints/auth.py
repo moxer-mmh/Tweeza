@@ -10,9 +10,18 @@ from app.schemas import (
     OrganizationCreate,
     OAuthRequest,
     OAuthProvider,
+    TwoFactorVerify,
 )
-from app.services import auth_service, user_service, organization_service, oauth_service
+from app.services import (
+    auth_service,
+    user_service,
+    organization_service,
+    oauth_service,
+    two_factor_service,
+)
 from app.db import get_db
+from app.db.models import User
+from app.api.v1.dependencies import get_current_user  # Add this import
 
 router = APIRouter()
 
@@ -126,3 +135,134 @@ def oauth_login(*, oauth_data: OAuthRequest, db: Session = Depends(get_db)):
 
     # Create access token
     return auth_service.create_user_token(user.id)
+
+
+# OAuth routes
+@router.get("/google/login")
+def google_login():
+    """
+    Generate Google OAuth login URL.
+    """
+    redirect_uri = "http://localhost:3000/auth/google/callback"  # Use your actual frontend callback URL
+    url = oauth_service.get_google_auth_url(redirect_uri)
+    return {"url": url}
+
+
+@router.get("/google/callback", response_model=Token)
+def google_callback(code: str, db: Session = Depends(get_db)):
+    """
+    Handle Google OAuth callback.
+    """
+    user, is_new = oauth_service.handle_google_callback(db, code)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Failed to authenticate with Google",
+        )
+    return auth_service.create_user_token(user.id)
+
+
+@router.get("/facebook/login")
+def facebook_login():
+    """
+    Generate Facebook OAuth login URL.
+    """
+    redirect_uri = "http://localhost:3000/auth/facebook/callback"  # Use your actual frontend callback URL
+    url = oauth_service.get_facebook_auth_url(redirect_uri)
+    return {"url": url}
+
+
+@router.get("/facebook/callback", response_model=Token)
+def facebook_callback(code: str, db: Session = Depends(get_db)):
+    """
+    Handle Facebook OAuth callback.
+    """
+    user, is_new = oauth_service.handle_facebook_callback(db, code)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Failed to authenticate with Facebook",
+        )
+    return auth_service.create_user_token(user.id)
+
+
+# Two-Factor Authentication routes
+@router.post("/two-factor/enable")
+def enable_two_factor(
+    data: dict,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),  # Fix: use the imported function
+):
+    """
+    Enable two-factor authentication.
+    """
+    method = data.get("method", "totp")
+    phone_number = data.get("phone_number")
+
+    success = two_factor_service.enable_two_factor(
+        db, current_user.id, method, phone_number
+    )
+
+    return {"success": success}
+
+
+@router.post("/two-factor/disable")
+def disable_two_factor(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),  # Fix: use the imported function
+):
+    """
+    Disable two-factor authentication.
+    """
+    success = two_factor_service.disable_2fa(db, current_user.id)
+    return {"success": success}
+
+
+@router.post("/two-factor/send-code")
+def send_verification_code(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),  # Fix: use the imported function
+):
+    """
+    Send verification code.
+    """
+    success = two_factor_service.send_verification_code(db, current_user.id)
+    return {"success": success}
+
+
+@router.post("/two-factor/verify")
+def verify_two_factor_code(
+    data: dict,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),  # Fix: use the imported function
+):
+    """
+    Verify two-factor authentication code.
+    """
+    code = data.get("code")
+    success = two_factor_service.verify_code(db, current_user.id, code)
+
+    if success:
+        # Generate token if verification is successful
+        token = auth_service.create_user_token(current_user.id)
+        return {
+            "success": True,
+            "access_token": token.access_token,
+            "token_type": "bearer",
+        }
+
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid verification code",
+    )
+
+
+@router.get("/two-factor/status")
+def get_two_factor_status(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),  # Fix: use the imported function
+):
+    """
+    Get the two-factor authentication status for the current user.
+    """
+    return two_factor_service.get_user_two_factor(db, current_user.id)
