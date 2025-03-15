@@ -12,6 +12,7 @@ Tweeza is a backend solution designed for the Djezzy Code Fest hackathon. It pro
   - [Installation](#installation)
   - [Configuration](#configuration)
   - [Running the Application](#running-the-application)
+    - [Docker Deployment](#docker-deployment)
   - [API Documentation](#api-documentation)
   - [Testing](#testing)
   - [DevOps \& Deployment](#devops--deployment)
@@ -91,6 +92,19 @@ uvicorn main:app --reload
 
 The API will be available at `http://localhost:8000`. Swagger documentation is accessible at `/docs` and ReDoc at `/redoc`.
 
+### Docker Deployment
+ 
+ A Dockerfile is provided for containerized deployment:
+ 
+ ```
+ docker build -t tweeza-backend .
+ docker run -p 8000:8000 tweeza-backend
+ ```
+ or
+ ```
+ docker-compose up
+ ```
+ 
 ## API Documentation
 
 The API endpoints are categorized by functionality. For example:

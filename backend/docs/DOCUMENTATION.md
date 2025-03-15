@@ -15,6 +15,7 @@ Client Layer → API Layer → Service Layer → Data Access Layer → Database 
 ```
 
 Key components:
+
 - **FastAPI Application**: High-performance API framework
 - **SQLAlchemy ORM**: Object-relational mapping for database operations
 - **SQLite Database**: Lightweight, portable database solution
@@ -45,6 +46,7 @@ sequenceDiagram
 ## Core Features
 
 ### 1. User Management
+
 - User registration and authentication
 - Profile management
 - Role-based access control (User, Organization Admin, Super Admin)
@@ -52,23 +54,27 @@ sequenceDiagram
 - OAuth integration (Google, Facebook)
 
 ### 2. Organization Management
+
 - Organization registration and profile management
 - Member management with roles (Admin, Member)
 - Organization analytics and insights
 
 ### 3. Event Management
+
 - Event creation and management
 - Collaborator coordination
 - Beneficiary tracking
 - Location-based event discovery
 
 ### 4. Resource Management
+
 - Resource request creation
 - Contribution tracking
 - Needs assessment
 - Resource allocation optimization
 
 ### 5. Notification System
+
 - Email notifications
 - In-app notifications
 - SMS integration (for critical updates)
@@ -77,55 +83,55 @@ sequenceDiagram
 
 ### Authentication Endpoints
 
-| Path | Method | Description | Rate Limit |
-|------|--------|-------------|------------|
-| `/api/v1/auth/login` | POST | User login with credentials | 30/min |
-| `/api/v1/auth/register` | POST | Register a new user | 10/min |
-| `/api/v1/auth/register-organization` | POST | Register organization with admin | 5/min |
-| `/api/v1/auth/google-login` | GET | Initiate Google OAuth flow | 10/min |
-| `/api/v1/auth/facebook-login` | GET | Initiate Facebook OAuth flow | 10/min |
-| `/api/v1/auth/2fa/enable` | POST | Enable two-factor auth | 5/min |
+| Path                                   | Method | Description                      | Rate Limit |
+| -------------------------------------- | ------ | -------------------------------- | ---------- |
+| `/api/v1/auth/login`                 | POST   | User login with credentials      | 30/min     |
+| `/api/v1/auth/register`              | POST   | Register a new user              | 10/min     |
+| `/api/v1/auth/register-organization` | POST   | Register organization with admin | 5/min      |
+| `/api/v1/auth/google-login`          | GET    | Initiate Google OAuth flow       | 10/min     |
+| `/api/v1/auth/facebook-login`        | GET    | Initiate Facebook OAuth flow     | 10/min     |
+| `/api/v1/auth/2fa/enable`            | POST   | Enable two-factor auth           | 5/min      |
 
 ### User Endpoints
 
-| Path | Method | Auth Required | Description | Role Required |
-|------|--------|---------------|-------------|---------------|
-| `/api/v1/users/me` | GET | Yes | Get current user profile | Any |
-| `/api/v1/users/` | GET | Yes | List all users | Admin/SuperAdmin |
-| `/api/v1/users/search` | GET | Yes | Search for users | Any |
-| `/api/v1/users/{user_id}` | GET | Yes | Get user by ID | Any* |
-| `/api/v1/users/{user_id}` | PUT | Yes | Update user | Self/Admin/SuperAdmin |
+| Path                        | Method | Auth Required | Description              | Role Required         |
+| --------------------------- | ------ | ------------- | ------------------------ | --------------------- |
+| `/api/v1/users/me`        | GET    | Yes           | Get current user profile | Any                   |
+| `/api/v1/users/`          | GET    | Yes           | List all users           | Admin/SuperAdmin      |
+| `/api/v1/users/search`    | GET    | Yes           | Search for users         | Any                   |
+| `/api/v1/users/{user_id}` | GET    | Yes           | Get user by ID           | Any*                  |
+| `/api/v1/users/{user_id}` | PUT    | Yes           | Update user              | Self/Admin/SuperAdmin |
 
 *Users can view limited info of other users, full info for themselves
 
 ### Organization Endpoints
 
-| Path | Method | Auth Required | Description | Role Required |
-|------|--------|---------------|-------------|---------------|
-| `/api/v1/organizations/` | GET | No | List organizations | None |
-| `/api/v1/organizations/my` | GET | Yes | List user's organizations | Any |
-| `/api/v1/organizations/` | POST | Yes | Create organization | Any |
-| `/api/v1/organizations/{org_id}` | GET | No | Get organization details | None |
-| `/api/v1/organizations/{org_id}/members` | GET | Yes | List organization members | Member/Admin* |
+| Path                                       | Method | Auth Required | Description               | Role Required |
+| ------------------------------------------ | ------ | ------------- | ------------------------- | ------------- |
+| `/api/v1/organizations/`                 | GET    | No            | List organizations        | None          |
+| `/api/v1/organizations/my`               | GET    | Yes           | List user's organizations | Any           |
+| `/api/v1/organizations/`                 | POST   | Yes           | Create organization       | Any           |
+| `/api/v1/organizations/{org_id}`         | GET    | No            | Get organization details  | None          |
+| `/api/v1/organizations/{org_id}/members` | GET    | Yes           | List organization members | Member/Admin* |
 
 ### Event Endpoints
 
-| Path | Method | Auth Required | Description | Role Required |
-|------|--------|---------------|-------------|---------------|
-| `/api/v1/events/` | GET | No | List all events | None |
-| `/api/v1/events/upcoming` | GET | No | List upcoming events | None |
-| `/api/v1/events/nearby` | GET | No | List nearby events | None |
-| `/api/v1/events/` | POST | Yes | Create event | OrgAdmin/Admin |
-| `/api/v1/events/{event_id}` | GET | No | Get event details | None |
+| Path                          | Method | Auth Required | Description          | Role Required  |
+| ----------------------------- | ------ | ------------- | -------------------- | -------------- |
+| `/api/v1/events/`           | GET    | No            | List all events      | None           |
+| `/api/v1/events/upcoming`   | GET    | No            | List upcoming events | None           |
+| `/api/v1/events/nearby`     | GET    | No            | List nearby events   | None           |
+| `/api/v1/events/`           | POST   | Yes           | Create event         | OrgAdmin/Admin |
+| `/api/v1/events/{event_id}` | GET    | No            | Get event details    | None           |
 
 ### Resource Endpoints
 
-| Path | Method | Auth Required | Description | Role Required |
-|------|--------|---------------|-------------|---------------|
-| `/api/v1/resources/requests` | POST | Yes | Create resource request | Any |
-| `/api/v1/resources/events/{event_id}/requests` | GET | Yes | List event resource requests | Member/OrgAdmin |
-| `/api/v1/resources/contributions` | POST | Yes | Create contribution | Any |
-| `/api/v1/resources/users/me/contributions` | GET | Yes | Get user contributions | Any |
+| Path                                             | Method | Auth Required | Description                  | Role Required   |
+| ------------------------------------------------ | ------ | ------------- | ---------------------------- | --------------- |
+| `/api/v1/resources/requests`                   | POST   | Yes           | Create resource request      | Any             |
+| `/api/v1/resources/events/{event_id}/requests` | GET    | Yes           | List event resource requests | Member/OrgAdmin |
+| `/api/v1/resources/contributions`              | POST   | Yes           | Create contribution          | Any             |
+| `/api/v1/resources/users/me/contributions`     | GET    | Yes           | Get user contributions       | Any             |
 
 ## Database Schema
 
@@ -234,7 +240,7 @@ sequenceDiagram
     Auth->>DB: Query user by email
     DB->>Auth: User data (if exists)
     Auth->>Auth: Verify password hash
-    
+  
     alt Authentication Successful
         Auth->>Auth: create_access_token(user_id, expires)
         Auth->>API: Return JWT token
@@ -246,7 +252,7 @@ sequenceDiagram
 
     Client->>API: Request with Authorization header
     API->>Auth: Validate token
-    
+  
     alt Token Valid
         Auth->>API: User context
         API->>Client: Requested resource
@@ -258,38 +264,39 @@ sequenceDiagram
 
 ### Role-Based Permission Matrix
 
-| Action | User | Organization Admin | Super Admin |
-|--------|------|-------------------|-------------|
-| View public resources | ✅ | ✅ | ✅ |
-| View own profile | ✅ | ✅ | ✅ |
-| Update own profile | ✅ | ✅ | ✅ |
-| Create organization | ✅ | ✅ | ✅ |
-| View organization details | ✅ | ✅ | ✅ |
-| Update organization | ❌ | ✅ (own) | ✅ (all) |
-| Delete organization | ❌ | ✅ (own) | ✅ (all) |
-| Add members to organization | ❌ | ✅ (own) | ✅ (all) |
-| Create events | ❌ | ✅ (own org) | ✅ (any org) |
-| Update/delete events | ❌ | ✅ (own org) | ✅ (all) |
-| Create resource requests | ✅ | ✅ | ✅ |
-| Contribute to resources | ✅ | ✅ | ✅ |
-| View all users | ❌ | ❌ | ✅ |
-| Delete users | ❌ | ❌ | ✅ |
+| Action                      | User | Organization Admin | Super Admin  |
+| --------------------------- | ---- | ------------------ | ------------ |
+| View public resources       | ✅   | ✅                 | ✅           |
+| View own profile            | ✅   | ✅                 | ✅           |
+| Update own profile          | ✅   | ✅                 | ✅           |
+| Create organization         | ✅   | ✅                 | ✅           |
+| View organization details   | ✅   | ✅                 | ✅           |
+| Update organization         | ❌   | ✅ (own)           | ✅ (all)     |
+| Delete organization         | ❌   | ✅ (own)           | ✅ (all)     |
+| Add members to organization | ❌   | ✅ (own)           | ✅ (all)     |
+| Create events               | ❌   | ✅ (own org)       | ✅ (any org) |
+| Update/delete events        | ❌   | ✅ (own org)       | ✅ (all)     |
+| Create resource requests    | ✅   | ✅                 | ✅           |
+| Contribute to resources     | ✅   | ✅                 | ✅           |
+| View all users              | ❌   | ❌                 | ✅           |
+| Delete users                | ❌   | ❌                 | ✅           |
 
 ### Security Measures
 
 1. **Data Protection**
+
    - Password hashing using bcrypt with proper salt
    - Input validation against injection attacks
    - Proper CORS configuration
    - No sensitive data in logs
-
 2. **Authentication Security**
+
    - JWT tokens with proper expiration (8 days default)
    - Role-based permissions strictly enforced
    - Two-factor authentication support
    - OAuth integration for reduced password management
-
 3. **API Protection**
+
    - Rate limiting on sensitive endpoints
    - Comprehensive input validation
    - Proper error handling without leaking information
@@ -365,7 +372,7 @@ flowchart TD
     D --> E[Associate with event]
     E --> F[Notify event collaborators]
     F --> G[Return resource request]
-    
+  
     H[User views request] --> I{User contributes?}
     I -- No --> J[End]
     I -- Yes --> K[Create contribution record]
@@ -391,18 +398,19 @@ The backend implements a smart resource allocation algorithm that:
 ## Performance Optimization
 
 1. **Database Optimization**
+
    - Strategic indexing on frequently queried fields
    - Connection pooling for efficiency
    - Selective loading of related entities
    - Query optimization using SQLAlchemy features
-
 2. **API Optimization**
+
    - Pagination for all list endpoints
    - Response caching for public resources
    - Efficient serialization/deserialization
    - Compression for larger responses
-
 3. **Location-Based Services**
+
    - Spatial indexing for efficient proximity queries
    - Batch geocoding to reduce API calls
    - Caching of location data
@@ -427,34 +435,34 @@ The backend implements a smart resource allocation algorithm that:
 
 ### Error Code Table
 
-| Status Code | Error Type | Description |
-|-------------|------------|-------------|
-| 400 | Bad Request | Invalid request parameters |
-| 401 | Unauthorized | Missing or invalid authentication |
-| 403 | Forbidden | Insufficient permissions |
-| 404 | Not Found | Resource does not exist |
-| 409 | Conflict | Resource already exists |
-| 422 | Validation Error | Input data validation failed |
-| 429 | Too Many Requests | Rate limit exceeded |
-| 500 | Internal Server Error | Unexpected server error |
+| Status Code | Error Type            | Description                       |
+| ----------- | --------------------- | --------------------------------- |
+| 400         | Bad Request           | Invalid request parameters        |
+| 401         | Unauthorized          | Missing or invalid authentication |
+| 403         | Forbidden             | Insufficient permissions          |
+| 404         | Not Found             | Resource does not exist           |
+| 409         | Conflict              | Resource already exists           |
+| 422         | Validation Error      | Input data validation failed      |
+| 429         | Too Many Requests     | Rate limit exceeded               |
+| 500         | Internal Server Error | Unexpected server error           |
 
 ## Environment Configuration
 
-| Variable Name | Description | Default Value | Required |
-|---------------|-------------|--------------|----------|
-| SECRET_KEY | JWT signing secret | Random token | Yes |
-| ALGORITHM | JWT algorithm | HS256 | Yes |
-| APP_ENV | Environment (development/production) | development | No |
-| ACCESS_TOKEN_EXPIRE_MINUTES | JWT expiration in minutes | 11520 (8 days) | No |
-| GOOGLE_CLIENT_ID | Google OAuth client ID | - | For OAuth |
-| GOOGLE_CLIENT_SECRET | Google OAuth client secret | - | For OAuth |
-| FACEBOOK_CLIENT_ID | Facebook OAuth client ID | - | For OAuth |
-| FACEBOOK_CLIENT_SECRET | Facebook OAuth client secret | - | For OAuth |
-| EMAIL_HOST | SMTP server host | - | For emails |
-| EMAIL_PORT | SMTP server port | 587 | For emails |
-| EMAIL_USER | SMTP username | - | For emails |
-| EMAIL_PASSWORD | SMTP password | - | For emails |
-| EMAIL_FROM | From email address | no-reply@tweeza.com | For emails |
+| Variable Name               | Description                          | Default Value       | Required   |
+| --------------------------- | ------------------------------------ | ------------------- | ---------- |
+| SECRET_KEY                  | JWT signing secret                   | Random token        | Yes        |
+| ALGORITHM                   | JWT algorithm                        | HS256               | Yes        |
+| APP_ENV                     | Environment (development/production) | development         | No         |
+| ACCESS_TOKEN_EXPIRE_MINUTES | JWT expiration in minutes            | 11520 (8 days)      | No         |
+| GOOGLE_CLIENT_ID            | Google OAuth client ID               | -                   | For OAuth  |
+| GOOGLE_CLIENT_SECRET        | Google OAuth client secret           | -                   | For OAuth  |
+| FACEBOOK_CLIENT_ID          | Facebook OAuth client ID             | -                   | For OAuth  |
+| FACEBOOK_CLIENT_SECRET      | Facebook OAuth client secret         | -                   | For OAuth  |
+| EMAIL_HOST                  | SMTP server host                     | -                   | For emails |
+| EMAIL_PORT                  | SMTP server port                     | 587                 | For emails |
+| EMAIL_USER                  | SMTP username                        | -                   | For emails |
+| EMAIL_PASSWORD              | SMTP password                        | -                   | For emails |
+| EMAIL_FROM                  | From email address                   | no-reply@tweeza.com | For emails |
 
 ## Testing Framework
 
@@ -529,16 +537,17 @@ python run_tests.py --path tests/test_api/test_auth.py
 ### Scaling Strategy
 
 1. **Horizontal Scaling**
+
    - Stateless API design allows for multiple instances
    - Load balancing across instances
    - Database connection pooling
-
 2. **Vertical Scaling**
+
    - Database optimization for larger datasets
    - Memory caching for frequent queries
    - Background task processing for heavy operations
-
 3. **Geographic Distribution**
+
    - Multiple deployment regions for Algeria's different wilayas
    - CDN integration for static assets
    - Edge caching for API responses
@@ -603,113 +612,6 @@ python run_tests.py --path tests/test_api/test_auth.py
 - Configurable data retention policies
 - User data deletion capabilities
 - Anonymization of historical data
-
-## Implementation Timeline
-
-1. **Phase 1: Core Authentication and User Management**
-   - User registration and authentication
-   - Profile management
-   - Basic authorization
-
-2. **Phase 2: Organization and Event Framework**
-   - Organization creation and management
-   - Event setup and management
-   - Member coordination
-
-3. **Phase 3: Resource Management System**
-   - Resource request creation
-   - Contribution tracking
-   - Needs assessment
-
-4. **Phase 4: Optimization and Analytics**
-   - Resource allocation optimization
-   - Impact tracking
-   - Analytics dashboard
-
-## Impact Measurement
-
-### Key Performance Indicators
-
-1. **Resource Efficiency**
-   - Percentage of requests fulfilled
-   - Average time to fulfillment
-   - Resource waste reduction
-
-2. **Community Engagement**
-   - Active users growth
-   - Organization participation
-   - Volunteer retention rate
-
-3. **Distribution Impact**
-   - Number of beneficiaries reached
-   - Geographic distribution of aid
-   - Types of resources distributed
-
-### Analytics Dashboard
-
-The system provides real-time analytics for organizers:
-
-- Resource distribution maps
-- Contribution trends
-- Need hotspots
-- Volunteer activity metrics
-
-## Future Development Roadmap
-
-### Short-term Enhancements
-
-1. **Mobile Application Integration**
-   - Native app APIs
-   - Push notification services
-   - Offline functionality
-
-2. **Advanced Search Capabilities**
-   - Semantic search for resources
-   - Need-based matching algorithm
-   - Predictive resource requirements
-
-### Long-term Vision
-
-1. **Machine Learning Integration**
-   - Donation pattern analysis
-   - Predictive need forecasting
-   - Automatic matching of donors to needs
-
-2. **Blockchain Verification**
-   - Transparent donation tracking
-   - Immutable contribution records
-   - Resource provenance verification
-
-3. **Expanded Platform Ecosystem**
-   - Volunteer skill marketplace
-   - Knowledge sharing platform
-   - Training and certification
-
-## Technical Innovations
-
-### Smart Resource Allocation
-
-Our platform uses a proprietary algorithm that considers:
-- Geographic distance
-- Time sensitivity
-- Resource compatibility
-- Transportation optimization
-
-This reduces waste by up to 35% compared to traditional distribution methods.
-
-### Decentralized Coordination
-
-The system enables decentralized coordination without central bottlenecks:
-- Peer-to-peer resource requests
-- Local coordination groups
-- Direct donor-beneficiary connections when appropriate
-
-### Offline-First Architecture
-
-Critical functions work without consistent internet access:
-- Queue-based synchronization
-- Local data storage with sync
-- Low-bandwidth operation modes
 
 ## Conclusion
 
