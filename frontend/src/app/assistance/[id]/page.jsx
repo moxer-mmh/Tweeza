@@ -12,15 +12,14 @@ export default function AssistancePage() {
   const [services, setServices] = useState([]);
 
   useEffect(() => {
-    // In a real application, you would fetch the assistance details from an API
-    // For now, we'll simulate it with mock data
     const mockAssistance = {
       id: parseInt(id),
       title: "Legal Aid Services",
       location: "Community Center",
       date: "2024-04-15",
       time: "10:00 AM - 4:00 PM",
-      description: "Free legal consultation services for community members. Our volunteer attorneys provide guidance on various legal matters including housing, employment, and family law.",
+      description:
+        "Free legal consultation services for community members. Our volunteer attorneys provide guidance on various legal matters including housing, employment, and family law.",
       services: [
         { id: 1, name: "Housing Rights Consultation", available: true },
         { id: 2, name: "Employment Law Advice", available: true },
@@ -30,8 +29,8 @@ export default function AssistancePage() {
       eligibility: [
         "Open to all community members",
         "Priority given to low-income individuals",
-        "Bring identification and relevant documents"
-      ]
+        "Bring identification and relevant documents",
+      ],
     };
 
     setAssistance(mockAssistance);
@@ -181,7 +180,10 @@ export default function AssistancePage() {
           <Button
             className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg"
             onClick={() =>
-              console.log("Request assistance", { assistanceId: id, service: services.find(s => s.available) })
+              console.log("Request assistance", {
+                assistanceId: id,
+                service: services.find((s) => s.available),
+              })
             }
           >
             Request Assistance

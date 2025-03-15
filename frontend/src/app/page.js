@@ -4,6 +4,7 @@ import { useState } from "react";
 import EmergencyCard from "@/components/EmergencyCard";
 import AssistanceCard from "@/components/AssistanceCard";
 import EventCard from "@/components/EventCard";
+import Link from "next/link";
 import Map from "@/components/Map";
 
 const Page = () => {
@@ -19,6 +20,7 @@ const Page = () => {
         urgency: "High",
         quantity: { current: 30, needed: 100 },
         deadline: "2024-02-01",
+        coordinates: { lat: 40.7128, lng: -74.006 },
       },
       {
         id: 2,
@@ -28,6 +30,7 @@ const Page = () => {
         urgency: "Medium",
         quantity: { current: 45, needed: 80 },
         deadline: "2024-02-15",
+        coordinates: { lat: 40.7228, lng: -73.996 },
       },
       {
         id: 3,
@@ -37,6 +40,7 @@ const Page = () => {
         urgency: "High",
         quantity: { current: 15, needed: 50 },
         deadline: "2024-01-30",
+        coordinates: { lat: 40.7328, lng: -73.986 },
       },
     ],
     assistance: [
@@ -91,7 +95,7 @@ const Page = () => {
   const activeData = mockData[activeTab] || [];
 
   return (
-    <div className="container mx-auto pb-8">
+    <div className=" pb-8">
       <div className="relative">
         <div className="absolute left-1/2 -translate-x-1/2 top-4 z-10 flex items-center gap-2 w-3/4 md:w-1/4 max-w-4xl ">
           <div className="relative flex-1">
@@ -100,15 +104,8 @@ const Page = () => {
               placeholder="Search locations..."
               className="w-full pl-10 pr-4 py-1 text-black rounded-lg focus:outline-none focus:border-red-700 bg-white "
             />
-          </div>
-        </div>
-        <Map data={activeData} type={activeTab} />
-      </div>
-      <div className="mt-[420px]">
-        <div className="absolute right-4 top-2 z-10">
-          <button className="p-2 h-10 w-10 bg-white border-2 shadow-md border-[#E8E8E8] rounded-full hover:shadow-lg transition-shadow">
             <svg
-              className=" text-gray-600"
+              className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400"
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
               fill="none"
@@ -117,10 +114,32 @@ const Page = () => {
               strokeLinecap="round"
               strokeLinejoin="round"
             >
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.3-4.3" />
             </svg>
-          </button>
+          </div>
+        </div>
+        <div className="absolute right-4 top-2 z-10">
+          <Link href="/profile">
+            <button className="p-2 h-10 w-10 bg-white border-2 shadow-md border-[#E8E8E8] rounded-full hover:shadow-lg transition-shadow">
+              <svg
+                className=" text-gray-600"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            </button>
+          </Link>
+        </div>
+        <div className="bg-gray-100 z-0 rounded-lg h-[400px] relative">
+          <Map items={activeData} activeTab={activeTab} />
         </div>
       </div>
 
@@ -210,3 +229,47 @@ const Page = () => {
 };
 
 export default Page;
+
+<div className="pb-8">
+  <div className="sticky top-0 z-50">
+    <div className="absolute left-1/2 -translate-x-1/2 top-4 z-10 flex items-center gap-2 w-3/4 md:w-1/4 max-w-4xl ">
+      <div className="relative flex-1">
+        <input
+          type="text"
+          placeholder="Search locations..."
+          className="w-full pl-10 pr-4 py-1 text-black rounded-lg focus:outline-none focus:border-red-700 bg-transparent"
+        />
+        <svg
+          className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.3-4.3" />
+        </svg>
+      </div>
+    </div>
+    <div className="absolute right-4 top-2 z-10">
+      <button className="p-2 h-10 w-10 border-2 shadow-md border-[#E8E8E8] rounded-full hover:shadow-lg transition-shadow bg-transparent">
+        <svg
+          className="text-gray-600"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+          <circle cx="12" cy="7" r="4" />
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>;

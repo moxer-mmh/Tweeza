@@ -1,12 +1,18 @@
+"use client";
 import React from "react";
 
+import { useRouter } from "next/navigation";
+
 const EventCard = ({
+  id,
   title,
   description,
   location,
   date,
   attendees = { current: 0 },
 }) => {
+  const router = useRouter();
+
   return (
     <div className="border h-[290px] border-[#E8E8E8] rounded-[16px] overflow-hidden shadow-md hover:shadow-lg transition-shadow bg-white">
       <div className="p-4">
@@ -50,10 +56,10 @@ const EventCard = ({
                 clipRule="evenodd"
               />
             </svg>
-            <span className="text-sm">{location}</span>
+            <span className="text-sm">Location: {location}</span>
           </div>
 
-          <div className="flex items-center text-gray-500 mb-3">
+          <div className="flex items-center text-gray-500">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-5 w-5 mr-1"
@@ -66,20 +72,16 @@ const EventCard = ({
                 clipRule="evenodd"
               />
             </svg>
-            <span className="text-sm">
-              {attendees.current} People Attending
-            </span>
+            <span className="text-sm">{attendees.current} Attendees</span>
           </div>
         </div>
 
-        <div className="flex space-x-2">
-          <button className="flex-1 rounded-[16px] border-2 border-[#E8E8E8] bg-emerald-600 text-white py-2 px-4 hover:bg-emerald-700 transition-colors">
-            Join Now
-          </button>
-          <button className="flex-1 border-2 border-[#E8E8E8] rounded-[16px] text-emerald-600 py-2 px-4 hover:bg-gray-50 transition-colors">
-            View Details
-          </button>
-        </div>
+        <button
+          onClick={() => router.push(`/donate/${id}`)}
+          className="w-full bg-emerald-600 text-white py-2 rounded-md hover:bg-emerald-700 transition-colors"
+        >
+          View Details
+        </button>
       </div>
     </div>
   );

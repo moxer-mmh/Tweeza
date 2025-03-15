@@ -13,8 +13,6 @@ export default function VolunteerPage() {
   const [tasks, setTasks] = useState([]);
 
   useEffect(() => {
-    // In a real application, you would fetch the volunteer opportunity details from an API
-    // For now, we'll simulate it with mock data
     const mockOpportunity = {
       id: parseInt(id),
       title: "Food Distribution Center",
