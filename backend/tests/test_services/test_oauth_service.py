@@ -7,7 +7,7 @@ from app.schemas import OAuthProvider
 @patch("app.services.oauth_service.google_client")
 def test_get_google_auth_url(mock_google_client):
     """Test getting Google authentication URL."""
-    # Mock return value
+    # Define expected URL
     expected_url = (
         "https://accounts.google.com/o/oauth2/auth?response_type=code&client_id=..."
     )
@@ -29,17 +29,18 @@ def test_google_auth_callback(mock_google_client, db_session):
         "email": "test@example.com",
         "name": "Test User",
         "picture": "https://example.com/photo.jpg",
-        "id": "12345",
+        "sub": "12345",  # Changed from "id" to "sub" to match Google's actual format
     }
 
     # Call function
     code = "test_auth_code"
-    user, is_new = oauth_service.handle_google_callback(db_session, code)
+    redirect_uri = "http://127.0.0.1:8000/api/v1/auth/google/callback"
+    user, is_new = oauth_service.handle_google_callback(db_session, code, redirect_uri)
 
     # Verify
     assert user is not None
     assert user.email == "test@example.com"
-    mock_google_client.get_user_info.assert_called_once_with(code)
+    mock_google_client.get_user_info.assert_called_once_with(code, redirect_uri)
 
 
 @patch("app.services.oauth_service.facebook_client")
