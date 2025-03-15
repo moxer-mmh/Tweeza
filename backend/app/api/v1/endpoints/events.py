@@ -376,3 +376,32 @@ def list_beneficiaries(event_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Event not found")
 
     return event_service.get_event_beneficiaries(db, event_id)
+
+
+@router.post("/{event_id}/join")
+def join_event(
+    *,
+    event_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Allow a user to join an event as a beneficiary.
+    """
+    # Check if event exists
+    event = event_service.get_event(db, event_id)
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    # Create beneficiary data from current user
+    beneficiary_data = EventBeneficiaryCreate(user_id=current_user.id)
+
+    # Add the user as a beneficiary
+    beneficiary = event_service.add_beneficiary_to_event(db, event_id, beneficiary_data)
+    if not beneficiary:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Failed to join event. You may already be registered.",
+        )
+
+    return {"message": "Successfully joined the event"}
