@@ -211,6 +211,10 @@ A Dockerfile is provided for containerized deployment:
 docker build -t tweeza-backend .
 docker run -p 8000:8000 tweeza-backend
 ```
+or
+```
+docker-compose up
+```
 
 ## Testing
 
