@@ -14,6 +14,7 @@ This repository contains the complete source code for both the backend and front
   - [Table of Contents](#table-of-contents)
   - [Overview](#overview)
   - [Architecture](#architecture)
+    - [Technical Documentation](#technical-documentation)
     - [Backend Architecture](#backend-architecture)
     - [Frontend Architecture](#frontend-architecture)
   - [Features](#features)
