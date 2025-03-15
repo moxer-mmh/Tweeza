@@ -1,0 +1,13 @@
+[tool.pytest]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_functions = "test_*"
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "--cov=app --cov-report=term"
+testpaths = ["tests"]
+
+[tool.coverage]
+source = ["app"]
+omit = ["tests/*", "migrations/*"]
