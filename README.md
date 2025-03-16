@@ -14,6 +14,7 @@ This repository contains the complete source code for both the backend and front
   - [Table of Contents](#table-of-contents)
   - [Overview](#overview)
   - [Architecture](#architecture)
+    - [Technical Documentation](#technical-documentation)
     - [Backend Architecture](#backend-architecture)
     - [Frontend Architecture](#frontend-architecture)
   - [Features](#features)
@@ -44,6 +45,10 @@ The platform is tailored to Algeria's unique context, with localization for Arab
 ---
 
 ## Architecture
+
+### Technical Documentation
+
+Check : [Technical Documentation](https://github.com/moxer-mmh/Tweeza/blob/main/backend/docs/DOCUMENTATION.md)
 
 ### Backend Architecture
 
